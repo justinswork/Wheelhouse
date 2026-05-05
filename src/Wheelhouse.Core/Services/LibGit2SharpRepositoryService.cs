@@ -40,7 +40,16 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
     public Task<WorkingTreeStatus> GetWorkingTreeStatusAsync(CancellationToken ct = default)
     {
         EnsureOpen();
-        var status = _repo!.RetrieveStatus(new StatusOptions());
+        RepositoryStatus status;
+        try
+        {
+            status = _repo!.RetrieveStatus(new StatusOptions());
+        }
+        catch (Exception ex) when (ex.Message.Contains("checksum") || ex.Message.Contains("index"))
+        {
+            throw new InvalidOperationException(
+                "The git index is corrupted. Run 'git reset' in the repository to repair it.", ex);
+        }
 
         var staged = status
             .Where(e => e.State.HasFlag(FileStatus.NewInIndex)
