@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -19,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Wheelhouse.Core\Wheelhouse.Core.csproj" />
+    <ProjectReference Include="..\..\src\Wheelhouse.UI\Wheelhouse.UI.csproj" />
   </ItemGroup>
 
 </Project>

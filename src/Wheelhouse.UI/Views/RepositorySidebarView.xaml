@@ -14,18 +14,17 @@
                 Padding="8,6"
                 BorderBrush="{DynamicResource BrushBorderSubtle}"
                 BorderThickness="0,0,0,1">
-            <DockPanel>
+            <StackPanel>
                 <TextBlock Text="{Binding RepositoryName}"
                            FontWeight="SemiBold" FontSize="13"
                            Foreground="{DynamicResource BrushOnSurface}"
-                           TextTrimming="CharacterEllipsis"
-                           VerticalAlignment="Center" />
-                <TextBlock DockPanel.Dock="Bottom"
-                           Text="{Binding CurrentBranchName}"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding CurrentBranchName}"
                            FontSize="11"
                            Foreground="{DynamicResource BrushPrimary}"
-                           TextTrimming="CharacterEllipsis" />
-            </DockPanel>
+                           TextTrimming="CharacterEllipsis"
+                           Margin="0,2,0,0" />
+            </StackPanel>
         </Border>
 
         <!-- Empty state -->
