@@ -48,7 +48,9 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
         catch (Exception ex) when (ex.Message.Contains("checksum") || ex.Message.Contains("index"))
         {
             throw new InvalidOperationException(
-                "The git index is corrupted. Run 'git reset' in the repository to repair it.", ex);
+                "The git index uses a format not supported by this version of Wheelhouse. " +
+                "Run 'git update-index --refresh' or 'git reset' in the repository to rebuild it " +
+                "in a compatible format.", ex);
         }
 
         var staged = status
