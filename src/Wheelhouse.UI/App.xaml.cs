@@ -40,6 +40,10 @@ public partial class App : Application
 
         // ViewModels
         services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<WorkingTreeViewModel>();
+        services.AddSingleton<LogViewModel>();
+        services.AddSingleton<DiffViewModel>();
+        services.AddSingleton<RepositorySidebarViewModel>();
 
         // Windows
         services.AddSingleton<MainWindow>();

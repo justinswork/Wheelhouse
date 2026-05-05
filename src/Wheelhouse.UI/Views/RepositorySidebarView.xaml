@@ -1,0 +1,112 @@
+<UserControl x:Class="Wheelhouse.UI.Views.RepositorySidebarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Wheelhouse.UI.ViewModels"
+             d:DataContext="{d:DesignInstance vm:RepositorySidebarViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Background="{DynamicResource BrushSidebarBg}">
+    <DockPanel>
+
+        <!-- Repo name header -->
+        <Border DockPanel.Dock="Top"
+                Padding="8,6"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="0,0,0,1">
+            <DockPanel>
+                <TextBlock Text="{Binding RepositoryName}"
+                           FontWeight="SemiBold" FontSize="13"
+                           Foreground="{DynamicResource BrushOnSurface}"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center" />
+                <TextBlock DockPanel.Dock="Bottom"
+                           Text="{Binding CurrentBranchName}"
+                           FontSize="11"
+                           Foreground="{DynamicResource BrushPrimary}"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+
+        <!-- Empty state -->
+        <TextBlock Text="Open a repository to get started."
+                   Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                   TextWrapping="Wrap"
+                   Margin="8,8"
+                   FontSize="12"
+                   Visibility="{Binding HasRepository, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+
+        <!-- Branch/tag tree -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+
+                <!-- Local Branches -->
+                <Expander IsExpanded="True" Margin="0,4,0,0">
+                    <Expander.Header>
+                        <TextBlock Text="LOCAL BRANCHES" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                    </Expander.Header>
+                    <ItemsControl ItemsSource="{Binding LocalBranches}" Margin="8,0,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:BranchItemViewModel}">
+                                <Border Padding="4,3" Cursor="Hand">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlt}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Left" Text="⎇ " FontSize="11"
+                                                   Foreground="{DynamicResource BrushPrimary}"
+                                                   Visibility="{Binding IsCurrent, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock Text="{Binding AheadBehind}" DockPanel.Dock="Right"
+                                                   FontSize="10" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                                   VerticalAlignment="Center" Margin="4,0,0,0" />
+                                        <TextBlock Text="{Binding DisplayName}" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{DynamicResource BrushOnSurface}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource BrushPrimary}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+
+                <!-- Remote Branches -->
+                <Expander IsExpanded="False" Margin="0,4,0,0">
+                    <Expander.Header>
+                        <TextBlock Text="REMOTE BRANCHES" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                    </Expander.Header>
+                    <ItemsControl ItemsSource="{Binding RemoteBranches}" Margin="8,0,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:BranchItemViewModel}">
+                                <Border Padding="4,3">
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="12"
+                                               Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

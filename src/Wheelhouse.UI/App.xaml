@@ -9,8 +9,9 @@
                 <ResourceDictionary Source="Themes/Light.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <conv:BoolToRowHeightConverter x:Key="BoolToRowHeightConverter" />
-            <BooleanToVisibilityConverter  x:Key="BoolToVisibilityConverter" />
+            <conv:BoolToRowHeightConverter        x:Key="BoolToRowHeightConverter" />
+            <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+            <BooleanToVisibilityConverter          x:Key="BoolToVisibilityConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
