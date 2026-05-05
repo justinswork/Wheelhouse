@@ -22,7 +22,12 @@ public sealed partial class WorkingTreeViewModel : ViewModelBase,
     [ObservableProperty] private string _commitMessage = string.Empty;
     [ObservableProperty] private bool _amend = false;
     [ObservableProperty] private bool _isLoading = false;
-    [ObservableProperty] private string? _statusMessage;
+    [ObservableProperty] private bool _isLoaded = false;
+    [ObservableProperty] private string? _errorMessage;
+
+    public bool HasNoStagedFiles => IsLoaded && StagedFiles.Count == 0 && ErrorMessage is null;
+    public bool HasNoUnstagedFiles => IsLoaded && UnstagedFiles.Count == 0 && ErrorMessage is null;
+    public bool HasError => ErrorMessage is not null;
 
     public bool CanCommit => StagedFiles.Count > 0 && !string.IsNullOrWhiteSpace(CommitMessage);
 
@@ -58,6 +63,7 @@ public sealed partial class WorkingTreeViewModel : ViewModelBase,
     {
         if (!_repositoryService.IsOpen) return;
         IsLoading = true;
+        ErrorMessage = null;
         try
         {
             var status = await _repositoryService.GetWorkingTreeStatusAsync();
@@ -71,12 +77,19 @@ public sealed partial class WorkingTreeViewModel : ViewModelBase,
                         .Concat(status.UntrackedEntries)
                         .Concat(status.ConflictedEntries)
                         .Select(e => new FileStatusItemViewModel(e, isStaged: false)));
+                IsLoaded = true;
                 OnPropertyChanged(nameof(CanCommit));
+                OnPropertyChanged(nameof(HasNoStagedFiles));
+                OnPropertyChanged(nameof(HasNoUnstagedFiles));
+                OnPropertyChanged(nameof(HasError));
             });
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            ErrorMessage = ex.Message;
+            OnPropertyChanged(nameof(HasError));
+            OnPropertyChanged(nameof(HasNoStagedFiles));
+            OnPropertyChanged(nameof(HasNoUnstagedFiles));
         }
         finally
         {
@@ -130,7 +143,8 @@ public sealed partial class WorkingTreeViewModel : ViewModelBase,
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Commit failed: {ex.Message}";
+            ErrorMessage = $"Commit failed: {ex.Message}";
+            OnPropertyChanged(nameof(HasError));
         }
     }
 
@@ -141,6 +155,11 @@ public sealed partial class WorkingTreeViewModel : ViewModelBase,
             StagedFiles.Clear();
             UnstagedFiles.Clear();
             CommitMessage = string.Empty;
+            IsLoaded = false;
+            ErrorMessage = null;
+            OnPropertyChanged(nameof(HasNoStagedFiles));
+            OnPropertyChanged(nameof(HasNoUnstagedFiles));
+            OnPropertyChanged(nameof(HasError));
         });
     }
 }

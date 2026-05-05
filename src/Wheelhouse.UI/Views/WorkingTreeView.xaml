@@ -9,14 +9,29 @@
              Background="{DynamicResource BrushBackground}">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" MinHeight="80" />
             <RowDefinition Height="4" />
             <RowDefinition Height="*" MinHeight="80" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Error banner (only visible when ErrorMessage is set) -->
+        <Border Grid.Row="0"
+                Background="#FFEBE9" BorderBrush="#FFCFC9" BorderThickness="0,0,0,1"
+                Padding="8,6"
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVisibilityConverter}}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Retry" Padding="6,2" FontSize="11"
+                        Command="{Binding RefreshCommand}"
+                        Background="Transparent" BorderThickness="1" BorderBrush="#FFCFC9" />
+                <TextBlock Text="{Binding ErrorMessage}" FontSize="11" Foreground="#CF222E"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+
         <!-- Staged Changes -->
-        <DockPanel Grid.Row="0">
+        <DockPanel Grid.Row="1">
             <Border DockPanel.Dock="Top"
                     Background="{DynamicResource BrushSurfaceAlt}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
@@ -26,6 +41,10 @@
                     <TextBlock Text="STAGED CHANGES" FontSize="11" FontWeight="SemiBold"
                                Foreground="{DynamicResource BrushOnSurfaceMuted}" VerticalAlignment="Center" />
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="↺" Padding="6,2" FontSize="11"
+                                Command="{Binding RefreshCommand}"
+                                Background="Transparent" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                BorderThickness="0" ToolTip="Refresh" />
                         <Button Content="Unstage All" Padding="6,2" FontSize="11"
                                 Command="{Binding UnstageAllCommand}"
                                 Background="Transparent" Foreground="{DynamicResource BrushOnSurfaceMuted}"
@@ -33,52 +52,58 @@
                     </StackPanel>
                 </DockPanel>
             </Border>
-            <ListView ItemsSource="{Binding StagedFiles}"
-                      SelectedItem="{Binding SelectedStagedFile}"
-                      Background="{DynamicResource BrushSurface}"
-                      BorderThickness="0"
-                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                      VirtualizingPanel.IsVirtualizing="True">
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Padding" Value="0" />
-                        <Setter Property="Background" Value="Transparent" />
-                    </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:FileStatusItemViewModel}">
-                        <Grid Margin="4,2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="18" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{Binding StateLabel}"
-                                       Foreground="{DynamicResource BrushOnSurface}"
-                                       FontFamily="{StaticResource FontMono}" FontSize="11"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                            <TextBlock Grid.Column="1" Text="{Binding FilePath}"
-                                       Foreground="{DynamicResource BrushOnSurface}"
-                                       FontSize="12" VerticalAlignment="Center"
-                                       TextTrimming="CharacterEllipsis" />
-                            <Button Grid.Column="2" Content="−" Padding="4,1" FontSize="11"
-                                    Background="Transparent" BorderThickness="0"
-                                    Foreground="{DynamicResource BrushOnSurfaceMuted}"
-                                    Command="{Binding DataContext.UnstageFileCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="Unstage" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+            <Grid Background="{DynamicResource BrushSurface}">
+                <ListView ItemsSource="{Binding StagedFiles}"
+                          SelectedItem="{Binding SelectedStagedFile}"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          VirtualizingPanel.IsVirtualizing="True">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Background" Value="Transparent" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:FileStatusItemViewModel}">
+                            <Grid Margin="4,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding StateLabel}"
+                                           Foreground="{DynamicResource BrushOnSurface}"
+                                           FontFamily="{StaticResource FontMono}" FontSize="11"
+                                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding FilePath}"
+                                           Foreground="{DynamicResource BrushOnSurface}"
+                                           FontSize="12" VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                                <Button Grid.Column="2" Content="−" Padding="4,1" FontSize="11"
+                                        Background="Transparent" BorderThickness="0"
+                                        Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                        Command="{Binding DataContext.UnstageFileCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                        CommandParameter="{Binding}"
+                                        ToolTip="Unstage" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <TextBlock Text="No staged changes"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="12" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                           Visibility="{Binding HasNoStagedFiles, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Grid>
         </DockPanel>
 
-        <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch"
+        <GridSplitter Grid.Row="2" Height="4" HorizontalAlignment="Stretch"
                       Background="{DynamicResource BrushBorderSubtle}" />
 
         <!-- Unstaged Changes -->
-        <DockPanel Grid.Row="2">
+        <DockPanel Grid.Row="3">
             <Border DockPanel.Dock="Top"
                     Background="{DynamicResource BrushSurfaceAlt}"
                     BorderBrush="{DynamicResource BrushBorderSubtle}"
@@ -95,49 +120,55 @@
                     </StackPanel>
                 </DockPanel>
             </Border>
-            <ListView ItemsSource="{Binding UnstagedFiles}"
-                      SelectedItem="{Binding SelectedUnstagedFile}"
-                      Background="{DynamicResource BrushSurface}"
-                      BorderThickness="0"
-                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                      VirtualizingPanel.IsVirtualizing="True">
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Padding" Value="0" />
-                        <Setter Property="Background" Value="Transparent" />
-                    </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:FileStatusItemViewModel}">
-                        <Grid Margin="4,2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="18" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{Binding StateLabel}"
-                                       Foreground="{DynamicResource BrushOnSurface}"
-                                       FontFamily="{StaticResource FontMono}" FontSize="11"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-                            <TextBlock Grid.Column="1" Text="{Binding FilePath}"
-                                       Foreground="{DynamicResource BrushOnSurface}"
-                                       FontSize="12" VerticalAlignment="Center"
-                                       TextTrimming="CharacterEllipsis" />
-                            <Button Grid.Column="2" Content="+" Padding="4,1" FontSize="11"
-                                    Background="Transparent" BorderThickness="0"
-                                    Foreground="{DynamicResource BrushOnSurfaceMuted}"
-                                    Command="{Binding DataContext.StageFileCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="Stage" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+            <Grid Background="{DynamicResource BrushSurface}">
+                <ListView ItemsSource="{Binding UnstagedFiles}"
+                          SelectedItem="{Binding SelectedUnstagedFile}"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          VirtualizingPanel.IsVirtualizing="True">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Background" Value="Transparent" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:FileStatusItemViewModel}">
+                            <Grid Margin="4,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding StateLabel}"
+                                           Foreground="{DynamicResource BrushOnSurface}"
+                                           FontFamily="{StaticResource FontMono}" FontSize="11"
+                                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding FilePath}"
+                                           Foreground="{DynamicResource BrushOnSurface}"
+                                           FontSize="12" VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                                <Button Grid.Column="2" Content="+" Padding="4,1" FontSize="11"
+                                        Background="Transparent" BorderThickness="0"
+                                        Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                        Command="{Binding DataContext.StageFileCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                        CommandParameter="{Binding}"
+                                        ToolTip="Stage" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <TextBlock Text="Working tree is clean"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="12" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                           Visibility="{Binding HasNoUnstagedFiles, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Grid>
         </DockPanel>
 
         <!-- Commit Area -->
-        <Border Grid.Row="3"
+        <Border Grid.Row="4"
                 Background="{DynamicResource BrushSurface}"
                 BorderBrush="{DynamicResource BrushBorderSubtle}"
                 BorderThickness="0,1,0,0"
