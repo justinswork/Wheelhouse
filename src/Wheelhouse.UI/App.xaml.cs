@@ -37,6 +37,7 @@ public partial class App : Application
         // Hosting providers
         services.AddSingleton<IHostingProvider, GitHubHostingProvider>();
         services.AddSingleton<IHostingProvider, AzureDevOpsHostingProvider>();
+        services.AddSingleton<IHostingService, HostingService>();
 
         // ViewModels
         services.AddSingleton<MainWindowViewModel>();
@@ -45,6 +46,7 @@ public partial class App : Application
         services.AddSingleton<DiffViewModel>();
         services.AddSingleton<RepositorySidebarViewModel>();
         services.AddSingleton<ReflogViewModel>();
+        services.AddSingleton<PullRequestsViewModel>();
 
         // Windows
         services.AddSingleton<MainWindow>();

@@ -1,0 +1,186 @@
+<UserControl x:Class="Wheelhouse.UI.Views.PullRequestsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Wheelhouse.UI.ViewModels"
+             d:DataContext="{d:DesignInstance vm:PullRequestsViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Background="{DynamicResource BrushBackground}">
+    <DockPanel>
+        <!-- Header bar -->
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource BrushSurfaceAlt}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="0,0,0,1" Padding="8,6">
+            <DockPanel>
+                <Button Content="+ New PR" DockPanel.Dock="Right"
+                        Command="{Binding CreatePullRequestCommand}"
+                        Padding="10,4" FontSize="12"
+                        IsEnabled="{Binding IsAuthenticated}" />
+                <Button Content="↻" DockPanel.Dock="Right" Margin="0,0,8,0"
+                        Command="{Binding LoadCommand}"
+                        ToolTip="Refresh" Padding="6,4" FontSize="12"
+                        IsEnabled="{Binding IsAuthenticated}" />
+                <TextBlock Text="PULL REQUESTS" FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource BrushOnSurfaceMuted}" VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <!-- Loading indicator -->
+        <Border DockPanel.Dock="Top" Padding="8,4"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Text="Loading..." FontSize="12"
+                       Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+        </Border>
+
+        <!-- Empty / unauthenticated state -->
+        <Border DockPanel.Dock="Top" Padding="16,24"
+                Visibility="{Binding NoContentMessage, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+            <TextBlock Text="{Binding NoContentMessage}" FontSize="13"
+                       Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                       TextWrapping="Wrap" HorizontalAlignment="Center" />
+        </Border>
+
+        <!-- PR list + detail split -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320" MinWidth="200" />
+                <ColumnDefinition Width="4" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- PR list -->
+            <ListBox Grid.Column="0"
+                     ItemsSource="{Binding PullRequests}"
+                     SelectedItem="{Binding SelectedPullRequest}"
+                     Background="{DynamicResource BrushBackground}"
+                     BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:PullRequestItemViewModel}">
+                        <Border Padding="10,8"
+                                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                BorderThickness="0,0,0,1">
+                            <DockPanel>
+                                <!-- CI status + PR number -->
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                            VerticalAlignment="Top" Margin="6,0,0,0">
+                                    <TextBlock Text="{Binding CiStatus}" FontSize="13" VerticalAlignment="Center"
+                                               Margin="0,0,4,0" />
+                                    <TextBlock Text="{Binding Number, StringFormat='#{0}'}" FontSize="11"
+                                               Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock FontSize="13" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding Title, Mode=OneWay}" />
+                                        <Run Text="{Binding DraftLabel, Mode=OneWay}"
+                                             Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                                    </TextBlock>
+                                    <TextBlock FontSize="11" Margin="0,2,0,0"
+                                               Foreground="{DynamicResource BrushOnSurfaceMuted}">
+                                        <Run Text="{Binding HeadBranch, Mode=OneWay}" />
+                                        <Run Text="→" />
+                                        <Run Text="{Binding BaseBranch, Mode=OneWay}" />
+                                    </TextBlock>
+                                    <TextBlock FontSize="11" Margin="0,1,0,0"
+                                               Foreground="{DynamicResource BrushOnSurfaceMuted}">
+                                        <Run Text="{Binding AuthorLogin, Mode=OneWay}" />
+                                        <Run Text=" · " />
+                                        <Run Text="{Binding RelativeDate, Mode=OneWay}" />
+                                        <Run Text=" · " />
+                                        <Run Text="{Binding CommentInfo, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                          Background="{DynamicResource BrushBorder}" />
+
+            <!-- PR detail panel -->
+            <Border Grid.Column="2"
+                    BorderBrush="{DynamicResource BrushBorder}"
+                    BorderThickness="1,0,0,0">
+                <Grid>
+                    <!-- Empty state -->
+                    <TextBlock Text="Select a pull request to view details."
+                               FontSize="13" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedPullRequest}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- Detail view -->
+                    <DockPanel DataContext="{Binding SelectedPullRequest}">
+                        <DockPanel.Style>
+                            <Style TargetType="DockPanel">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DockPanel.Style>
+
+                        <!-- Action toolbar -->
+                        <Border DockPanel.Dock="Top"
+                                Background="{DynamicResource BrushSurfaceAlt}"
+                                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                                BorderThickness="0,0,0,1" Padding="8,6">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Merge" Command="{Binding MergeCommand}"
+                                        Padding="12,4" Margin="0,0,8,0" FontSize="12" />
+                                <Button Content="Open in Browser" Command="{Binding OpenInBrowserCommand}"
+                                        Padding="12,4" FontSize="12"
+                                        Background="Transparent" BorderThickness="1" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- PR info -->
+                        <ScrollViewer Padding="16">
+                            <StackPanel>
+                                <TextBlock FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"
+                                           Margin="0,0,0,8" Text="{Binding Title}" />
+                                <TextBlock FontSize="12" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                           Margin="0,0,0,4">
+                                    <Run Text="by" />
+                                    <Run Text="{Binding AuthorLogin, Mode=OneWay}" FontWeight="SemiBold" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding RelativeDate, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock FontSize="12" Margin="0,0,0,12"
+                                           Foreground="{DynamicResource BrushOnSurfaceMuted}">
+                                    <Run Text="{Binding HeadBranch, Mode=OneWay}" />
+                                    <Run Text=" → " />
+                                    <Run Text="{Binding BaseBranch, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding PullRequest.Body}" FontSize="13"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource BrushOnSurface}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

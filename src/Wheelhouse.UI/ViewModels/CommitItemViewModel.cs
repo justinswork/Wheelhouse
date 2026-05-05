@@ -1,9 +1,10 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using Wheelhouse.Core.Models;
 using Wheelhouse.UI.Controls.CommitGraph;
 
 namespace Wheelhouse.UI.ViewModels;
 
-public sealed class CommitItemViewModel : ViewModelBase
+public sealed partial class CommitItemViewModel : ViewModelBase
 {
     public CommitInfo Commit { get; }
     public GraphRow GraphRow { get; set; }
@@ -12,6 +13,8 @@ public sealed class CommitItemViewModel : ViewModelBase
     public string MessageShort => Commit.MessageShort;
     public string AuthorName => Commit.AuthorName;
     public string RelativeDate => FormatRelativeDate(Commit.AuthorWhen);
+
+    [ObservableProperty] private string _ciStatus = "";
 
     public CommitItemViewModel(CommitInfo commit, GraphRow graphRow)
     {

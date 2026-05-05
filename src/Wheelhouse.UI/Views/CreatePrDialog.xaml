@@ -1,0 +1,47 @@
+<Window x:Class="Wheelhouse.UI.Views.CreatePrDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Create Pull Request"
+        Height="440" Width="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Cancel" IsCancel="True" Padding="14,6" Margin="0,0,8,0"
+                    Background="Transparent" BorderThickness="1" />
+            <Button x:Name="CreateButton" Content="Create PR" IsDefault="True" Padding="14,6"
+                    Click="OnCreateClick" />
+        </StackPanel>
+        <StackPanel>
+            <TextBlock Text="Title:" FontSize="12" Margin="0,0,0,4" />
+            <TextBox x:Name="TitleBox" FontSize="12" Padding="4" Margin="0,0,0,12"
+                     TextChanged="OnTitleChanged" />
+
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="From branch:" FontSize="12" Margin="0,0,0,4" />
+                    <ComboBox x:Name="HeadBranchBox" FontSize="12" Padding="4,3" IsEditable="True" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="→" FontSize="16" VerticalAlignment="Bottom"
+                           HorizontalAlignment="Center" Margin="0,0,0,4" />
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Into branch:" FontSize="12" Margin="0,0,0,4" />
+                    <ComboBox x:Name="BaseBranchBox" FontSize="12" Padding="4,3" IsEditable="True" />
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="Description (optional):" FontSize="12" Margin="0,0,0,4" />
+            <TextBox x:Name="BodyBox" FontSize="12" Padding="4" Height="120"
+                     TextWrapping="Wrap" AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto" Margin="0,0,0,12" />
+
+            <CheckBox x:Name="DraftCheckBox" Content="Create as draft" FontSize="12" />
+        </StackPanel>
+    </DockPanel>
+</Window>

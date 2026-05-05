@@ -59,3 +59,7 @@ public sealed class CommitSelectedMessage
     public CommitInfo Commit { get; }
     public CommitSelectedMessage(CommitInfo commit) { Commit = commit; }
 }
+
+public sealed class OpenPullRequestsMessage { }
+
+public sealed class PullRequestsChangedMessage { }

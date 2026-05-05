@@ -25,6 +25,8 @@ public interface IPullRequest
     DateTimeOffset CreatedAt { get; }
     DateTimeOffset? MergedAt { get; }
     string Url { get; }
+    int CommentCount { get; }
+    bool IsOpen { get; }
 }
 
 public interface ICheckRun
@@ -33,6 +35,7 @@ public interface ICheckRun
     string Status { get; }
     string? Conclusion { get; }
     string? DetailsUrl { get; }
+    string App { get; }
 }
 
 public enum MergeMethod { Merge, Squash, Rebase }

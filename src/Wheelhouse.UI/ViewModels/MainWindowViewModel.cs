@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Wheelhouse.Core.Services;
 using Wheelhouse.UI.Messages;
 using Wheelhouse.UI.Services;
+using Wheelhouse.UI.Views;
 
 namespace Wheelhouse.UI.ViewModels;
 
@@ -13,12 +14,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     IRecipient<OpenReflogMessage>,
     IRecipient<OpenFileHistoryMessage>,
     IRecipient<OpenBlameMessage>,
-    IRecipient<NavigateToCommitMessage>
+    IRecipient<NavigateToCommitMessage>,
+    IRecipient<OpenPullRequestsMessage>
 {
     private readonly IRepositoryService _repositoryService;
     private readonly ISettingsService _settingsService;
     private readonly IThemeService _themeService;
+    private readonly IHostingService _hostingService;
     private readonly ReflogViewModel _reflogViewModel;
+    private readonly PullRequestsViewModel _pullRequestsViewModel;
 
     // Panels rendered outside the tab system
     public DiffViewModel DiffViewModel { get; }
@@ -41,16 +45,20 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         IRepositoryService repositoryService,
         ISettingsService settingsService,
         IThemeService themeService,
+        IHostingService hostingService,
         WorkingTreeViewModel workingTreeViewModel,
         LogViewModel logViewModel,
         DiffViewModel diffViewModel,
         RepositorySidebarViewModel sidebarViewModel,
-        ReflogViewModel reflogViewModel)
+        ReflogViewModel reflogViewModel,
+        PullRequestsViewModel pullRequestsViewModel)
     {
         _repositoryService = repositoryService;
         _settingsService = settingsService;
         _themeService = themeService;
+        _hostingService = hostingService;
         _reflogViewModel = reflogViewModel;
+        _pullRequestsViewModel = pullRequestsViewModel;
 
         DiffViewModel = diffViewModel;
         SidebarViewModel = sidebarViewModel;
@@ -67,6 +75,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         WeakReferenceMessenger.Default.Register<OpenFileHistoryMessage>(this);
         WeakReferenceMessenger.Default.Register<OpenBlameMessage>(this);
         WeakReferenceMessenger.Default.Register<NavigateToCommitMessage>(this);
+        WeakReferenceMessenger.Default.Register<OpenPullRequestsMessage>(this);
     }
 
     void IRecipient<OpenReflogMessage>.Receive(OpenReflogMessage _)
@@ -118,6 +127,20 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     void IRecipient<NavigateToCommitMessage>.Receive(NavigateToCommitMessage _)
     {
         Application.Current.Dispatcher.Invoke(() => ActiveTab = _logTab);
+    }
+
+    void IRecipient<OpenPullRequestsMessage>.Receive(OpenPullRequestsMessage _)
+    {
+        var existing = Tabs.FirstOrDefault(t => t.ViewModel is PullRequestsViewModel);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (existing is null)
+            {
+                existing = new TabDefinition("Pull Requests", _pullRequestsViewModel, canClose: true, onClose: RemoveTab);
+                Tabs.Add(existing);
+            }
+            ActiveTab = existing;
+        });
     }
 
     private void RemoveTab(TabDefinition tab) =>
@@ -257,4 +280,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
 
     [RelayCommand]
     private void OpenReflog() => SidebarViewModel.OpenReflogCommand.Execute(null);
+
+    [RelayCommand]
+    private void OpenPullRequests() =>
+        WeakReferenceMessenger.Default.Send(new OpenPullRequestsMessage());
+
+    [RelayCommand]
+    private void OpenAccountSettings()
+    {
+        var dialog = new AccountSettingsDialog(_hostingService) { Owner = Application.Current.MainWindow };
+        dialog.ShowDialog();
+    }
 }

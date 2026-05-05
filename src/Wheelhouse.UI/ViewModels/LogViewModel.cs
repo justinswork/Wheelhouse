@@ -5,8 +5,10 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Wheelhouse.Core.Models;
 using Wheelhouse.Core.Services;
+using Wheelhouse.Hosting.Abstractions;
 using Wheelhouse.UI.Controls.CommitGraph;
 using Wheelhouse.UI.Messages;
+using Wheelhouse.UI.Services;
 
 namespace Wheelhouse.UI.ViewModels;
 
@@ -16,21 +18,35 @@ public sealed partial class LogViewModel : ViewModelBase,
     IRecipient<WorkingTreeChangedMessage>
 {
     private readonly IRepositoryService _repositoryService;
+    private readonly IHostingService _hostingService;
+    private string? _remoteUrl;
     private const int PageSize = 500;
+    private const int CiStatusBatchSize = 10;
 
     [ObservableProperty] private ObservableCollection<CommitItemViewModel> _commits = [];
     [ObservableProperty] private CommitItemViewModel? _selectedCommit;
     [ObservableProperty] private bool _isLoading = false;
     [ObservableProperty] private bool _hasMore = false;
 
-    public LogViewModel(IRepositoryService repositoryService)
+    public LogViewModel(IRepositoryService repositoryService, IHostingService hostingService)
     {
         _repositoryService = repositoryService;
+        _hostingService = hostingService;
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
-    void IRecipient<RepositoryOpenedMessage>.Receive(RepositoryOpenedMessage _) => LoadAsync().ConfigureAwait(false);
-    void IRecipient<RepositoryClosedMessage>.Receive(RepositoryClosedMessage _) => Application.Current.Dispatcher.Invoke(Commits.Clear);
+    void IRecipient<RepositoryOpenedMessage>.Receive(RepositoryOpenedMessage msg)
+    {
+        _remoteUrl = msg.Value.RemoteUrl;
+        LoadAsync().ConfigureAwait(false);
+    }
+
+    void IRecipient<RepositoryClosedMessage>.Receive(RepositoryClosedMessage _)
+    {
+        _remoteUrl = null;
+        Application.Current.Dispatcher.Invoke(Commits.Clear);
+    }
+
     void IRecipient<WorkingTreeChangedMessage>.Receive(WorkingTreeChangedMessage _) => LoadAsync().ConfigureAwait(false);
 
     partial void OnSelectedCommitChanged(CommitItemViewModel? value)
@@ -58,6 +74,8 @@ public sealed partial class LogViewModel : ViewModelBase,
                 Commits = new ObservableCollection<CommitItemViewModel>(items);
                 HasMore = rawCommits.Count == PageSize;
             });
+
+            _ = LoadCiStatusAsync(items);
         }
         catch (Exception ex)
         {
@@ -66,6 +84,32 @@ public sealed partial class LogViewModel : ViewModelBase,
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private async Task LoadCiStatusAsync(List<CommitItemViewModel> items)
+    {
+        if (_remoteUrl is null) return;
+        var provider = _hostingService.GetProviderForUrl(_remoteUrl);
+        if (provider is null) return;
+        if (!await provider.IsAuthenticatedAsync()) return;
+
+        foreach (var item in items.Take(CiStatusBatchSize))
+        {
+            try
+            {
+                var checks = (await provider.GetCheckRunsAsync(_remoteUrl, item.Commit.Sha)).ToList();
+                if (checks.Count == 0) continue;
+
+                string status;
+                if (checks.All(c => c.Conclusion == "success")) status = "✓";
+                else if (checks.Any(c => c.Conclusion == "failure")) status = "✗";
+                else if (checks.Any(c => c.Status == "in_progress")) status = "⟳";
+                else status = "·";
+
+                Application.Current.Dispatcher.Invoke(() => item.CiStatus = status);
+            }
+            catch { /* non-fatal */ }
         }
     }
 
