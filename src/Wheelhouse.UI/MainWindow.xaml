@@ -11,6 +11,25 @@
         MinHeight="500" MinWidth="800"
         Background="{DynamicResource BrushBackground}">
 
+    <!-- Implicit DataTemplates for tab content types -->
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:WorkingTreeViewModel}">
+            <views:WorkingTreeView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LogViewModel}">
+            <views:LogView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReflogViewModel}">
+            <views:ReflogView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:FileHistoryViewModel}">
+            <views:FileHistoryView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BlameViewModel}">
+            <views:BlameView />
+        </DataTemplate>
+    </Window.Resources>
+
     <Window.InputBindings>
         <KeyBinding Key="OemTilde" Modifiers="Ctrl" Command="{Binding ToggleTerminalCommand}" />
         <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenRepositoryCommand}" />
@@ -32,6 +51,7 @@
             <MenuItem Header="_View">
                 <MenuItem Header="_Terminal" Command="{Binding ToggleTerminalCommand}"
                           IsCheckable="True" IsChecked="{Binding IsTerminalVisible}" InputGestureText="Ctrl+`" />
+                <MenuItem Header="_Reflog" Command="{Binding OpenReflogCommand}" />
                 <Separator />
                 <MenuItem Header="_Theme">
                     <MenuItem Header="_Light"  Command="{Binding SetThemeCommand}" CommandParameter="Light" />
@@ -118,16 +138,35 @@
                 <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
                               Background="{DynamicResource BrushBorder}" />
 
-                <!-- Center: Working Tree / Log tabs -->
+                <!-- Center: Dynamic tab system -->
                 <TabControl Grid.Column="2"
+                            ItemsSource="{Binding Tabs}"
+                            SelectedItem="{Binding ActiveTab}"
                             Background="{DynamicResource BrushBackground}"
                             BorderThickness="0">
-                    <TabItem Header="Working Tree">
-                        <views:WorkingTreeView DataContext="{Binding WorkingTreeViewModel}" />
-                    </TabItem>
-                    <TabItem Header="Log">
-                        <views:LogView DataContext="{Binding LogViewModel}" />
-                    </TabItem>
+                    <TabControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:TabDefinition}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Header}" VerticalAlignment="Center" FontSize="12" />
+                                <Button Content="✕"
+                                        Command="{Binding CloseCommand}"
+                                        Visibility="{Binding CanClose, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="4,0,0,0"
+                                        Margin="6,0,0,0"
+                                        FontSize="10"
+                                        Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                        VerticalAlignment="Center"
+                                        Cursor="Hand" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate DataType="{x:Type vm:TabDefinition}">
+                            <ContentPresenter Content="{Binding ViewModel}" />
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
                 </TabControl>
 
                 <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Stretch"

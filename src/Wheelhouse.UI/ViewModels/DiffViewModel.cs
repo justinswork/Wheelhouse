@@ -12,7 +12,8 @@ public sealed partial class DiffViewModel : ViewModelBase,
     IRecipient<FileSelectedForDiffMessage>,
     IRecipient<CommitSelectedMessage>,
     IRecipient<RepositoryClosedMessage>,
-    IRecipient<WorkingTreeChangedMessage>
+    IRecipient<WorkingTreeChangedMessage>,
+    IRecipient<CommitFileSelectedMessage>
 {
     private readonly IRepositoryService _repositoryService;
     private string _currentFilePath = string.Empty;
@@ -56,6 +57,12 @@ public sealed partial class DiffViewModel : ViewModelBase,
         await Task.CompletedTask;
     }
 
+    async void IRecipient<CommitFileSelectedMessage>.Receive(CommitFileSelectedMessage msg)
+    {
+        _currentFilePath = string.Empty;
+        await LoadCommitFileDiffAsync(msg.CommitSha, msg.FilePath);
+    }
+
     void IRecipient<RepositoryClosedMessage>.Receive(RepositoryClosedMessage _)
     {
         _currentFilePath = string.Empty;
@@ -92,6 +99,55 @@ public sealed partial class DiffViewModel : ViewModelBase,
                 ? []
                 : diff.Hunks
                     .Select(h => new HunkViewModel(h, filePath, isStaged, diff.IsNew, diff.IsDeleted, _repositoryService))
+                    .ToList();
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                IsBinary = diff.IsBinary;
+                DiffHeader = BuildHeader(diff);
+                Hunks = new ObservableCollection<HunkViewModel>(hunks);
+                IsEmpty = hunks.Count == 0 && !diff.IsBinary;
+            });
+        }
+        catch (Exception ex)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Hunks = [];
+                DiffHeader = $"Error: {ex.Message}";
+                IsEmpty = true;
+            });
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadCommitFileDiffAsync(string commitSha, string filePath)
+    {
+        if (!_repositoryService.IsOpen) return;
+        IsLoading = true;
+        IsEmpty = false;
+        try
+        {
+            var diff = await _repositoryService.GetCommitFileDiffAsync(commitSha, filePath);
+            if (diff is null)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    Hunks = [];
+                    DiffHeader = filePath;
+                    IsEmpty = true;
+                    IsBinary = false;
+                });
+                return;
+            }
+
+            var hunks = diff.IsBinary
+                ? []
+                : diff.Hunks
+                    .Select(h => new HunkViewModel(h, filePath, false, diff.IsNew, diff.IsDeleted, _repositoryService, isReadOnly: true))
                     .ToList();
 
             Application.Current.Dispatcher.Invoke(() =>

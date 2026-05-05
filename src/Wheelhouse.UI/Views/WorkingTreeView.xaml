@@ -69,6 +69,12 @@
                     <ListView.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:FileStatusItemViewModel}">
                             <Grid Margin="4,2">
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="File History" Command="{Binding OpenFileHistoryCommand}" />
+                                        <MenuItem Header="Blame" Command="{Binding OpenBlameCommand}" />
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="18" />
                                     <ColumnDefinition Width="*" />
@@ -137,6 +143,12 @@
                     <ListView.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:FileStatusItemViewModel}">
                             <Grid Margin="4,2">
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="File History" Command="{Binding OpenFileHistoryCommand}" />
+                                        <MenuItem Header="Blame" Command="{Binding OpenBlameCommand}" />
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="18" />
                                     <ColumnDefinition Width="*" />

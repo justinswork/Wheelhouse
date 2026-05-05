@@ -16,15 +16,16 @@ public sealed partial class HunkViewModel : ViewModelBase
     private readonly bool _isNew;
     private readonly bool _isDeleted;
     private readonly IRepositoryService _service;
+    private readonly bool _isReadOnly;
 
     public string Header => _hunk.Header;
     public IReadOnlyList<DiffLineViewModel> Lines { get; }
 
-    public bool CanStage   => !_isStaged;
-    public bool CanUnstage => _isStaged;
-    public bool CanDiscard => !_isStaged;
+    public bool CanStage   => !_isStaged && !_isReadOnly;
+    public bool CanUnstage => _isStaged && !_isReadOnly;
+    public bool CanDiscard => !_isStaged && !_isReadOnly;
 
-    public HunkViewModel(DiffHunk hunk, string filePath, bool isStaged, bool isNew, bool isDeleted, IRepositoryService service)
+    public HunkViewModel(DiffHunk hunk, string filePath, bool isStaged, bool isNew, bool isDeleted, IRepositoryService service, bool isReadOnly = false)
     {
         _hunk = hunk;
         _filePath = filePath;
@@ -32,6 +33,7 @@ public sealed partial class HunkViewModel : ViewModelBase
         _isNew = isNew;
         _isDeleted = isDeleted;
         _service = service;
+        _isReadOnly = isReadOnly;
         Lines = hunk.Lines.Select(l => new DiffLineViewModel(l)).ToList();
     }
 

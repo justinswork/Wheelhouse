@@ -1,0 +1,85 @@
+<UserControl x:Class="Wheelhouse.UI.Views.FileHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Wheelhouse.UI.ViewModels"
+             d:DataContext="{d:DesignInstance vm:FileHistoryViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Background="{DynamicResource BrushBackground}">
+    <DockPanel>
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource BrushSurfaceAlt}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="0,0,0,1" Padding="8,4">
+            <DockPanel>
+                <TextBlock Text="FILE HISTORY" FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource BrushOnSurfaceMuted}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding FilePath}" FontSize="11" Margin="8,0,0,0"
+                           FontFamily="{StaticResource FontMono}"
+                           Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+
+        <TextBlock Text="Loading..." DockPanel.Dock="Top" Margin="8,4"
+                   Foreground="{DynamicResource BrushOnSurfaceMuted}" FontSize="12"
+                   Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+        <ListView ItemsSource="{Binding Commits}"
+                  SelectedItem="{Binding SelectedCommit}"
+                  Background="{DynamicResource BrushSurface}"
+                  BorderThickness="0"
+                  VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Height" Value="24" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Message" Width="400">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:FileHistoryEntryViewModel}">
+                                <TextBlock Text="{Binding MessageShort}" FontSize="12"
+                                           Foreground="{DynamicResource BrushOnSurface}"
+                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Author" Width="140">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:FileHistoryEntryViewModel}">
+                                <TextBlock Text="{Binding AuthorName}" FontSize="12"
+                                           Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Date" Width="90">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:FileHistoryEntryViewModel}">
+                                <TextBlock Text="{Binding RelativeDate}" FontSize="12"
+                                           Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                           VerticalAlignment="Center" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="SHA" Width="70">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:FileHistoryEntryViewModel}">
+                                <TextBlock Text="{Binding ShortSha}" FontFamily="{StaticResource FontMono}"
+                                           FontSize="11" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                           VerticalAlignment="Center" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </DockPanel>
+</UserControl>

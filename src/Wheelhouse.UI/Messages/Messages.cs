@@ -20,6 +20,33 @@ public sealed class TagChangedMessage { }
 
 public sealed class RemoteChangedMessage { }
 
+public sealed class OpenReflogMessage { }
+
+public sealed class OpenFileHistoryMessage
+{
+    public string FilePath { get; }
+    public OpenFileHistoryMessage(string filePath) => FilePath = filePath;
+}
+
+public sealed class OpenBlameMessage
+{
+    public string FilePath { get; }
+    public OpenBlameMessage(string filePath) => FilePath = filePath;
+}
+
+public sealed class CommitFileSelectedMessage
+{
+    public string CommitSha { get; }
+    public string FilePath { get; }
+    public CommitFileSelectedMessage(string commitSha, string filePath) { CommitSha = commitSha; FilePath = filePath; }
+}
+
+public sealed class NavigateToCommitMessage
+{
+    public string Sha { get; }
+    public NavigateToCommitMessage(string sha) => Sha = sha;
+}
+
 public sealed class FileSelectedForDiffMessage
 {
     public string FilePath { get; }

@@ -508,6 +508,24 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
         }
     }
 
+    public Task RebaseAsync(string onto, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.RebaseAsync(CurrentRepository!.Path, onto, ct);
+    }
+
+    public Task AbortRebaseAsync(CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.AbortRebaseAsync(CurrentRepository!.Path, ct);
+    }
+
+    public Task ContinueRebaseAsync(CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.ContinueRebaseAsync(CurrentRepository!.Path, ct);
+    }
+
     public Task RevertAsync(string commitSha, CancellationToken ct = default)
     {
         EnsureOpen();
@@ -518,6 +536,54 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
     {
         EnsureOpen();
         return GitCli.CherryPickAsync(CurrentRepository!.Path, commitSha, ct);
+    }
+
+    public Task<IReadOnlyList<Models.ReflogEntry>> GetReflogAsync(CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.GetReflogAsync(CurrentRepository!.Path, ct);
+    }
+
+    public Task<IReadOnlyList<CommitInfo>> GetFileHistoryAsync(string filePath, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.GetFileHistoryAsync(CurrentRepository!.Path, filePath, ct);
+    }
+
+    public Task<FileDiff?> GetCommitFileDiffAsync(string commitSha, string filePath, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.GetCommitFileDiffAsync(CurrentRepository!.Path, commitSha, filePath, ct);
+    }
+
+    public Task<IReadOnlyList<BlameLine>> GetBlameAsync(string filePath, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.GetBlameAsync(CurrentRepository!.Path, filePath, ct);
+    }
+
+    public Task<IReadOnlyList<WorktreeInfo>> GetWorktreesAsync(CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.GetWorktreesAsync(CurrentRepository!.Path, ct);
+    }
+
+    public Task AddWorktreeAsync(string worktreePath, string branch, bool createBranch, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.AddWorktreeAsync(CurrentRepository!.Path, worktreePath, branch, createBranch, ct);
+    }
+
+    public Task RemoveWorktreeAsync(string worktreePath, bool force, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.RemoveWorktreeAsync(CurrentRepository!.Path, worktreePath, force, ct);
+    }
+
+    public Task PruneWorktreesAsync(CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.PruneWorktreesAsync(CurrentRepository!.Path, ct);
     }
 
     public Task FetchAsync(string? remoteName = null, CancellationToken ct = default)

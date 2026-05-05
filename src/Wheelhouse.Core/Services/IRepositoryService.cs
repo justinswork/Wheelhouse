@@ -58,7 +58,22 @@ public interface IRepositoryService : IDisposable
 
     // Advanced git operations
     Task MergeAsync(string branchName, CancellationToken ct = default);
+    Task RebaseAsync(string onto, CancellationToken ct = default);
+    Task AbortRebaseAsync(CancellationToken ct = default);
+    Task ContinueRebaseAsync(CancellationToken ct = default);
     Task ResetAsync(string target, ResetMode mode, CancellationToken ct = default);
     Task RevertAsync(string commitSha, CancellationToken ct = default);
     Task CherryPickAsync(string commitSha, CancellationToken ct = default);
+
+    // Reflog / history / blame
+    Task<IReadOnlyList<ReflogEntry>> GetReflogAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<CommitInfo>> GetFileHistoryAsync(string filePath, CancellationToken ct = default);
+    Task<FileDiff?> GetCommitFileDiffAsync(string commitSha, string filePath, CancellationToken ct = default);
+    Task<IReadOnlyList<BlameLine>> GetBlameAsync(string filePath, CancellationToken ct = default);
+
+    // Worktrees
+    Task<IReadOnlyList<WorktreeInfo>> GetWorktreesAsync(CancellationToken ct = default);
+    Task AddWorktreeAsync(string worktreePath, string branch, bool createBranch, CancellationToken ct = default);
+    Task RemoveWorktreeAsync(string worktreePath, bool force, CancellationToken ct = default);
+    Task PruneWorktreesAsync(CancellationToken ct = default);
 }

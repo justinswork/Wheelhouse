@@ -357,6 +357,181 @@ internal static class GitCli
     internal static Task CherryPickAsync(string repoPath, string commitSha, CancellationToken ct = default) =>
         RunAsync(repoPath, $"cherry-pick {commitSha}", ct);
 
+    // Rebase
+
+    internal static Task RebaseAsync(string repoPath, string onto, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"rebase \"{onto}\"", ct);
+
+    internal static Task AbortRebaseAsync(string repoPath, CancellationToken ct = default) =>
+        RunAsync(repoPath, "rebase --abort", ct);
+
+    internal static Task ContinueRebaseAsync(string repoPath, CancellationToken ct = default) =>
+        RunAsync(repoPath, "rebase --continue", ct);
+
+    // Reflog
+
+    internal static async Task<IReadOnlyList<ReflogEntry>> GetReflogAsync(string repoPath, CancellationToken ct = default)
+    {
+        string output;
+        try { output = await RunAsync(repoPath, "log -g --format=%H%x09%h%x09%gd%x09%gs%x09%aI", ct); }
+        catch { return []; }
+
+        var entries = new List<ReflogEntry>();
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = line.Split('\t', 5);
+            if (parts.Length < 5) continue;
+            DateTimeOffset.TryParse(parts[4].Trim(), out var when);
+            entries.Add(new ReflogEntry(parts[0].Trim(), parts[1].Trim(), parts[2].Trim(), parts[3].Trim(), when));
+        }
+        return entries;
+    }
+
+    // File history
+
+    internal static async Task<IReadOnlyList<CommitInfo>> GetFileHistoryAsync(string repoPath, string filePath, CancellationToken ct = default)
+    {
+        var fmt = "%H%x09%h%x09%s%x09%an%x09%ae%x09%aI%x09%P";
+        string output;
+        try { output = await RunAsync(repoPath, $"log --follow --format={fmt} -- \"{filePath}\"", ct); }
+        catch { return []; }
+
+        var commits = new List<CommitInfo>();
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var p = line.Split('\t', 7);
+            if (p.Length < 6) continue;
+            DateTimeOffset.TryParse(p[5].Trim(), out var when);
+            var parents = p.Length >= 7
+                ? p[6].Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList()
+                : new List<string>();
+            commits.Add(new CommitInfo(p[0].Trim(), p[1].Trim(), p[2].Trim(), p[2].Trim(),
+                p[3].Trim(), p[4].Trim(), when, p[3].Trim(), when, parents));
+        }
+        return commits;
+    }
+
+    // Commit file diff
+
+    internal static async Task<FileDiff?> GetCommitFileDiffAsync(string repoPath, string commitSha, string filePath, CancellationToken ct = default)
+    {
+        string raw;
+        try { raw = await RunAsync(repoPath, $"show {commitSha} -- \"{filePath}\"", ct); }
+        catch { return null; }
+
+        if (string.IsNullOrEmpty(raw)) return null;
+        var diffStart = raw.IndexOf("diff --git", StringComparison.Ordinal);
+        if (diffStart < 0) return null;
+        raw = raw[diffStart..];
+
+        var isNew     = raw.Contains("new file mode");
+        var isDeleted = raw.Contains("deleted file mode");
+        var isRenamed = raw.Contains("rename from");
+        var isBinary  = raw.Contains("Binary files");
+
+        int added = 0, removed = 0;
+        string? oldPath = null, newPath = null;
+        foreach (var l in raw.Split('\n'))
+        {
+            if (l.StartsWith("--- a/"))      oldPath = l[6..];
+            else if (l.StartsWith("+++ b/")) newPath = l[6..];
+            else if (l.StartsWith('+') && !l.StartsWith("+++")) added++;
+            else if (l.StartsWith('-') && !l.StartsWith("---")) removed++;
+        }
+
+        var hunks = isBinary ? [] : DiffParser.ParseHunks(raw);
+        return new FileDiff(oldPath ?? filePath, newPath ?? filePath,
+            isBinary, isNew, isDeleted, isRenamed, added, removed, hunks);
+    }
+
+    // Blame
+
+    internal static async Task<IReadOnlyList<BlameLine>> GetBlameAsync(string repoPath, string filePath, CancellationToken ct = default)
+    {
+        string output;
+        try { output = await RunAsync(repoPath, $"blame --line-porcelain \"{filePath}\"", ct); }
+        catch { return []; }
+
+        var lines = output.Split('\n');
+        var result = new List<BlameLine>();
+        int i = 0;
+        while (i < lines.Length)
+        {
+            var header = lines[i];
+            var parts = header.Split(' ');
+            if (parts.Length < 3 || parts[0].Length < 7) { i++; continue; }
+            var sha = parts[0];
+            if (!int.TryParse(parts[2], out var lineNum)) { i++; continue; }
+            i++;
+
+            string author = "";
+            DateTimeOffset when = DateTimeOffset.MinValue;
+            while (i < lines.Length && !lines[i].StartsWith('\t'))
+            {
+                var hdr = lines[i++];
+                if (hdr.StartsWith("author ") && !hdr.StartsWith("author-"))
+                    author = hdr[7..].Trim();
+                else if (hdr.StartsWith("author-time ") && long.TryParse(hdr[12..].Trim(), out var ts))
+                    when = DateTimeOffset.FromUnixTimeSeconds(ts);
+            }
+
+            var content = i < lines.Length && lines[i].StartsWith('\t') ? lines[i++][1..] : "";
+            var shortSha = sha[..Math.Min(7, sha.Length)];
+            result.Add(new BlameLine(sha, shortSha, author, when, lineNum, content));
+        }
+        return result;
+    }
+
+    // Worktrees
+
+    internal static async Task<IReadOnlyList<WorktreeInfo>> GetWorktreesAsync(string repoPath, CancellationToken ct = default)
+    {
+        string output;
+        try { output = await RunAsync(repoPath, "worktree list --porcelain", ct); }
+        catch { return []; }
+
+        var result = new List<WorktreeInfo>();
+        string path = "", head = "", branch = "";
+        bool isLocked = false, started = false;
+
+        foreach (var line in output.Split('\n'))
+        {
+            if (line.StartsWith("worktree "))
+            {
+                if (started)
+                    result.Add(new WorktreeInfo(path,
+                        string.IsNullOrEmpty(branch) ? null : branch,
+                        string.IsNullOrEmpty(head)   ? null : head,
+                        result.Count == 0, isLocked));
+                path = line[9..].Trim(); head = branch = ""; isLocked = false; started = true;
+            }
+            else if (line.StartsWith("HEAD "))    head   = line[5..].Trim();
+            else if (line.StartsWith("branch "))  branch = line[7..].TrimStart().Replace("refs/heads/", "");
+            else if (line.StartsWith("locked"))   isLocked = true;
+        }
+
+        if (started)
+            result.Add(new WorktreeInfo(path,
+                string.IsNullOrEmpty(branch) ? null : branch,
+                string.IsNullOrEmpty(head)   ? null : head,
+                result.Count == 0, isLocked));
+
+        return result;
+    }
+
+    internal static Task AddWorktreeAsync(string repoPath, string worktreePath, string branch, bool createBranch, CancellationToken ct = default)
+    {
+        var newFlag = createBranch ? $"-b \"{branch}\" " : string.Empty;
+        var branchArg = createBranch ? string.Empty : $" \"{branch}\"";
+        return RunAsync(repoPath, $"worktree add {newFlag}\"{worktreePath}\"{branchArg}", ct);
+    }
+
+    internal static Task RemoveWorktreeAsync(string repoPath, string worktreePath, bool force, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"worktree remove{(force ? " --force" : "")} \"{worktreePath}\"", ct);
+
+    internal static Task PruneWorktreesAsync(string repoPath, CancellationToken ct = default) =>
+        RunAsync(repoPath, "worktree prune", ct);
+
     private static async Task<string> RunDiffNoIndexAsync(string repoPath, string filePath, CancellationToken ct)
     {
         var psi = new ProcessStartInfo("git", $"diff --no-index -- /dev/null \"{filePath}\"")

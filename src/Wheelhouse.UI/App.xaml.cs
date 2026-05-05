@@ -44,6 +44,7 @@ public partial class App : Application
         services.AddSingleton<LogViewModel>();
         services.AddSingleton<DiffViewModel>();
         services.AddSingleton<RepositorySidebarViewModel>();
+        services.AddSingleton<ReflogViewModel>();
 
         // Windows
         services.AddSingleton<MainWindow>();

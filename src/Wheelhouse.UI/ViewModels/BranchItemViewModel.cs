@@ -148,4 +148,21 @@ public sealed partial class BranchItemViewModel : ViewModelBase
             MessageBox.Show($"Merge failed: {ex.Message}", "Merge", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
+    [RelayCommand]
+    private async Task RebaseOntoAsync()
+    {
+        if (IsCurrent) return;
+        if (MessageBox.Show($"Rebase current branch onto '{DisplayName}'?", "Rebase", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+        try
+        {
+            await _repositoryService.RebaseAsync(Branch.FriendlyName);
+            WeakReferenceMessenger.Default.Send(new WorkingTreeChangedMessage());
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Rebase failed: {ex.Message}", "Rebase", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 }

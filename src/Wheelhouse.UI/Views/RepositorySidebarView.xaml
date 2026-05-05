@@ -39,6 +39,17 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
 
+                <!-- Reflog shortcut -->
+                <Border Padding="8,4" BorderBrush="{DynamicResource BrushBorderSubtle}" BorderThickness="0,0,0,1"
+                        Visibility="{Binding HasRepository, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Button Content="View Reflog"
+                            Command="{Binding OpenReflogCommand}"
+                            Background="Transparent" BorderThickness="0"
+                            Foreground="{DynamicResource BrushPrimary}"
+                            FontSize="12" HorizontalAlignment="Left" Padding="0"
+                            Cursor="Hand" />
+                </Border>
+
                 <!-- Local Branches -->
                 <Expander IsExpanded="True" Margin="0,4,0,0">
                     <Expander.Header>
@@ -70,6 +81,7 @@
                                         <ContextMenu>
                                             <MenuItem Header="Checkout" Command="{Binding CheckoutCommand}" />
                                             <MenuItem Header="Merge into Current" Command="{Binding MergeIntoCurrentCommand}" />
+                                            <MenuItem Header="Rebase onto This" Command="{Binding RebaseOntoCommand}" />
                                             <Separator />
                                             <MenuItem Header="Rename..." Command="{Binding RenameCommand}" />
                                             <MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
@@ -274,6 +286,61 @@
                                                    FontSize="10" Foreground="{DynamicResource BrushOnSurfaceMuted}"
                                                    VerticalAlignment="Center" Margin="4,0,0,0" />
                                         <TextBlock Text="{Binding Message}" FontSize="12"
+                                                   Foreground="{DynamicResource BrushOnSurface}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+
+                <!-- Worktrees -->
+                <Expander IsExpanded="False" Margin="0,4,0,0"
+                          Visibility="{Binding HasWorktrees, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Expander.Header>
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="Prune" Padding="4,0" FontSize="11"
+                                        Background="Transparent" BorderThickness="0"
+                                        Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                        Command="{Binding DataContext.PruneWorktreesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Prune worktrees" />
+                                <Button Content="+" Padding="4,0" FontSize="13"
+                                        Background="Transparent" BorderThickness="0"
+                                        Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                        Command="{Binding DataContext.AddWorktreeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Add worktree" />
+                            </StackPanel>
+                            <TextBlock Text="WORKTREES" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Expander.Header>
+                    <ItemsControl ItemsSource="{Binding Worktrees}" Margin="8,0,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:WorktreeItemViewModel}">
+                                <Border Padding="4,3">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlt}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Remove Worktree" Command="{Binding RemoveCommand}"
+                                                      IsEnabled="{Binding CanRemove}" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <DockPanel>
+                                        <TextBlock Text="{Binding Branch}" DockPanel.Dock="Bottom"
+                                                   FontSize="10" Foreground="{DynamicResource BrushPrimary}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding DisplayPath}" FontSize="12"
                                                    Foreground="{DynamicResource BrushOnSurface}"
                                                    TextTrimming="CharacterEllipsis" />
                                     </DockPanel>

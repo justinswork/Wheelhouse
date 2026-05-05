@@ -623,7 +623,7 @@ The core design departure from SmartGit: **everything happens in one window**. N
 
 - [ ] Profile and optimize graph rendering for repositories with >100k commits
 - [ ] Virtualize all long lists (branches, tags, files) — only render visible rows
-- [ ] Background threading for all Git operations (no UI freezes); progress shown in status bar
+- [x] Background threading for all Git operations (no UI freezes); progress shown in status bar
 - [ ] Incremental repository status refresh (inotify-style file watcher via `FileSystemWatcher`)
 - [ ] Repository index caching (avoid re-reading full index on every refresh)
 

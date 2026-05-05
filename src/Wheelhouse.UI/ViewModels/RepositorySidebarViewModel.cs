@@ -25,12 +25,14 @@ public sealed partial class RepositorySidebarViewModel : ViewModelBase,
     [ObservableProperty] private ObservableCollection<StashItemViewModel> _stashes = [];
     [ObservableProperty] private ObservableCollection<TagItemViewModel> _tags = [];
     [ObservableProperty] private ObservableCollection<RemoteItemViewModel> _remotes = [];
+    [ObservableProperty] private ObservableCollection<WorktreeItemViewModel> _worktrees = [];
     [ObservableProperty] private string _repositoryName = string.Empty;
     [ObservableProperty] private string _currentBranchName = string.Empty;
     [ObservableProperty] private bool _hasRepository = false;
     [ObservableProperty] private bool _hasStashes = false;
     [ObservableProperty] private bool _hasTags = false;
     [ObservableProperty] private bool _hasRemotes = false;
+    [ObservableProperty] private bool _hasWorktrees = false;
 
     public RepositorySidebarViewModel(IRepositoryService repositoryService)
     {
@@ -54,12 +56,14 @@ public sealed partial class RepositorySidebarViewModel : ViewModelBase,
             Stashes.Clear();
             Tags.Clear();
             Remotes.Clear();
+            Worktrees.Clear();
             RepositoryName = string.Empty;
             CurrentBranchName = string.Empty;
             HasRepository = false;
             HasStashes = false;
             HasTags = false;
             HasRemotes = false;
+            HasWorktrees = false;
         });
     }
 
@@ -83,16 +87,18 @@ public sealed partial class RepositorySidebarViewModel : ViewModelBase,
     {
         if (!_repositoryService.IsOpen) return;
 
-        var branchTask = _repositoryService.GetBranchesAsync();
-        var stashTask = _repositoryService.GetStashesAsync();
-        var tagTask = _repositoryService.GetTagsAsync();
-        var remoteTask = _repositoryService.GetRemotesAsync();
-        await Task.WhenAll(branchTask, stashTask, tagTask, remoteTask);
+        var branchTask   = _repositoryService.GetBranchesAsync();
+        var stashTask    = _repositoryService.GetStashesAsync();
+        var tagTask      = _repositoryService.GetTagsAsync();
+        var remoteTask   = _repositoryService.GetRemotesAsync();
+        var worktreeTask = _repositoryService.GetWorktreesAsync();
+        await Task.WhenAll(branchTask, stashTask, tagTask, remoteTask, worktreeTask);
 
-        var branches = await branchTask;
-        var stashList = await stashTask;
-        var tagList = await tagTask;
-        var remoteList = await remoteTask;
+        var branches    = await branchTask;
+        var stashList   = await stashTask;
+        var tagList     = await tagTask;
+        var remoteList  = await remoteTask;
+        var worktreeList = await worktreeTask;
 
         Application.Current.Dispatcher.Invoke(() =>
         {
@@ -119,6 +125,10 @@ public sealed partial class RepositorySidebarViewModel : ViewModelBase,
             Remotes = new ObservableCollection<RemoteItemViewModel>(
                 remoteList.Select(r => new RemoteItemViewModel(r, _repositoryService)));
             HasRemotes = Remotes.Count > 0;
+
+            Worktrees = new ObservableCollection<WorktreeItemViewModel>(
+                worktreeList.Select(w => new WorktreeItemViewModel(w, _repositoryService)));
+            HasWorktrees = Worktrees.Count > 1; // >1 because main worktree always exists
         });
     }
 
@@ -242,6 +252,59 @@ public sealed partial class RepositorySidebarViewModel : ViewModelBase,
             Application.Current.Dispatcher.Invoke(() =>
                 MessageBox.Show($"Add remote failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
         }
+    }
+
+    [RelayCommand]
+    private void OpenReflog() =>
+        WeakReferenceMessenger.Default.Send(new OpenReflogMessage());
+
+    [RelayCommand]
+    private void AddWorktree()
+    {
+        if (!_repositoryService.IsOpen) return;
+        var dialog = new AddWorktreeDialog { Owner = Application.Current.MainWindow };
+        if (dialog.ShowDialog() != true) return;
+        AddWorktreeCoreAsync(dialog.WorktreePath, dialog.Branch, dialog.CreateNewBranch).ConfigureAwait(false);
+    }
+
+    private async Task AddWorktreeCoreAsync(string path, string branch, bool createBranch)
+    {
+        try
+        {
+            await _repositoryService.AddWorktreeAsync(path, branch, createBranch);
+            await RefreshWorktreesAsync();
+        }
+        catch (Exception ex)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+                MessageBox.Show($"Add worktree failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
+        }
+    }
+
+    [RelayCommand]
+    private async Task PruneWorktreesAsync()
+    {
+        try
+        {
+            await _repositoryService.PruneWorktreesAsync();
+            await RefreshWorktreesAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Prune worktrees failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async Task RefreshWorktreesAsync()
+    {
+        if (!_repositoryService.IsOpen) return;
+        var worktreeList = await _repositoryService.GetWorktreesAsync();
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            Worktrees = new ObservableCollection<WorktreeItemViewModel>(
+                worktreeList.Select(w => new WorktreeItemViewModel(w, _repositoryService)));
+            HasWorktrees = Worktrees.Count > 1;
+        });
     }
 
     [RelayCommand]

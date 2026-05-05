@@ -1,23 +1,35 @@
+using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using System.Windows;
 using Wheelhouse.Core.Services;
 using Wheelhouse.UI.Messages;
 using Wheelhouse.UI.Services;
 
 namespace Wheelhouse.UI.ViewModels;
 
-public sealed partial class MainWindowViewModel : ViewModelBase
+public sealed partial class MainWindowViewModel : ViewModelBase,
+    IRecipient<OpenReflogMessage>,
+    IRecipient<OpenFileHistoryMessage>,
+    IRecipient<OpenBlameMessage>,
+    IRecipient<NavigateToCommitMessage>
 {
     private readonly IRepositoryService _repositoryService;
     private readonly ISettingsService _settingsService;
     private readonly IThemeService _themeService;
+    private readonly ReflogViewModel _reflogViewModel;
 
-    public WorkingTreeViewModel WorkingTreeViewModel { get; }
-    public LogViewModel LogViewModel { get; }
+    // Panels rendered outside the tab system
     public DiffViewModel DiffViewModel { get; }
     public RepositorySidebarViewModel SidebarViewModel { get; }
+
+    // Dynamic center tab system
+    [ObservableProperty] private ObservableCollection<TabDefinition> _tabs = [];
+    [ObservableProperty] private TabDefinition? _activeTab;
+
+    // Permanent tab refs for navigation
+    private readonly TabDefinition _logTab;
 
     [ObservableProperty] private string _title = "Wheelhouse";
     [ObservableProperty] private string _statusText = "Ready";
@@ -32,20 +44,84 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         WorkingTreeViewModel workingTreeViewModel,
         LogViewModel logViewModel,
         DiffViewModel diffViewModel,
-        RepositorySidebarViewModel sidebarViewModel)
+        RepositorySidebarViewModel sidebarViewModel,
+        ReflogViewModel reflogViewModel)
     {
         _repositoryService = repositoryService;
         _settingsService = settingsService;
         _themeService = themeService;
+        _reflogViewModel = reflogViewModel;
 
-        WorkingTreeViewModel = workingTreeViewModel;
-        LogViewModel = logViewModel;
         DiffViewModel = diffViewModel;
         SidebarViewModel = sidebarViewModel;
 
+        var workingTreeTab = new TabDefinition("Working Tree", workingTreeViewModel);
+        _logTab = new TabDefinition("Log", logViewModel);
+        Tabs = [workingTreeTab, _logTab];
+        ActiveTab = workingTreeTab;
+
         CurrentTheme = _themeService.CurrentTheme;
         _themeService.ThemeChanged += (_, theme) => CurrentTheme = theme;
+
+        WeakReferenceMessenger.Default.Register<OpenReflogMessage>(this);
+        WeakReferenceMessenger.Default.Register<OpenFileHistoryMessage>(this);
+        WeakReferenceMessenger.Default.Register<OpenBlameMessage>(this);
+        WeakReferenceMessenger.Default.Register<NavigateToCommitMessage>(this);
     }
+
+    void IRecipient<OpenReflogMessage>.Receive(OpenReflogMessage _)
+    {
+        var existing = Tabs.FirstOrDefault(t => t.ViewModel is ReflogViewModel);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (existing is null)
+            {
+                existing = new TabDefinition("Reflog", _reflogViewModel, canClose: true, onClose: RemoveTab);
+                Tabs.Add(existing);
+            }
+            ActiveTab = existing;
+        });
+    }
+
+    void IRecipient<OpenFileHistoryMessage>.Receive(OpenFileHistoryMessage msg)
+    {
+        var existing = Tabs.FirstOrDefault(t => t.ViewModel is FileHistoryViewModel fh && fh.FilePath == msg.FilePath);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (existing is null)
+            {
+                var vm = new FileHistoryViewModel(msg.FilePath, _repositoryService);
+                var header = "History: " + System.IO.Path.GetFileName(msg.FilePath);
+                existing = new TabDefinition(header, vm, canClose: true, onClose: RemoveTab);
+                Tabs.Add(existing);
+            }
+            ActiveTab = existing;
+        });
+    }
+
+    void IRecipient<OpenBlameMessage>.Receive(OpenBlameMessage msg)
+    {
+        var existing = Tabs.FirstOrDefault(t => t.ViewModel is BlameViewModel bv && bv.FilePath == msg.FilePath);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (existing is null)
+            {
+                var vm = new BlameViewModel(msg.FilePath, _repositoryService);
+                var header = "Blame: " + System.IO.Path.GetFileName(msg.FilePath);
+                existing = new TabDefinition(header, vm, canClose: true, onClose: RemoveTab);
+                Tabs.Add(existing);
+            }
+            ActiveTab = existing;
+        });
+    }
+
+    void IRecipient<NavigateToCommitMessage>.Receive(NavigateToCommitMessage _)
+    {
+        Application.Current.Dispatcher.Invoke(() => ActiveTab = _logTab);
+    }
+
+    private void RemoveTab(TabDefinition tab) =>
+        Application.Current.Dispatcher.Invoke(() => Tabs.Remove(tab));
 
     [RelayCommand]
     private void ToggleTerminal() => IsTerminalVisible = !IsTerminalVisible;
@@ -178,4 +254,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     [RelayCommand]
     private void AddRemote() => SidebarViewModel.AddRemoteCommand.Execute(null);
+
+    [RelayCommand]
+    private void OpenReflog() => SidebarViewModel.OpenReflogCommand.Execute(null);
 }

@@ -1,9 +1,12 @@
 using System.IO;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Wheelhouse.Core.Models;
+using Wheelhouse.UI.Messages;
 
 namespace Wheelhouse.UI.ViewModels;
 
-public sealed class FileStatusItemViewModel : ViewModelBase
+public sealed partial class FileStatusItemViewModel : ViewModelBase
 {
     public FileStatusEntry Entry { get; }
     public bool IsStaged { get; }
@@ -42,4 +45,12 @@ public sealed class FileStatusItemViewModel : ViewModelBase
         Entry = entry;
         IsStaged = isStaged;
     }
+
+    [RelayCommand]
+    private void OpenFileHistory() =>
+        WeakReferenceMessenger.Default.Send(new OpenFileHistoryMessage(FilePath));
+
+    [RelayCommand]
+    private void OpenBlame() =>
+        WeakReferenceMessenger.Default.Send(new OpenBlameMessage(FilePath));
 }
