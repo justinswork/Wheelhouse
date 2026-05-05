@@ -37,47 +37,18 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
         CurrentRepository = null;
     }
 
-    public Task<WorkingTreeStatus> GetWorkingTreeStatusAsync(CancellationToken ct = default)
+    public async Task<WorkingTreeStatus> GetWorkingTreeStatusAsync(CancellationToken ct = default)
     {
         EnsureOpen();
-        RepositoryStatus status;
         try
         {
-            status = _repo!.RetrieveStatus(new StatusOptions());
+            return GetStatusViaLibGit2();
         }
-        catch (Exception ex) when (ex.Message.Contains("checksum") || ex.Message.Contains("index"))
+        catch (Exception ex)
         {
-            throw new InvalidOperationException(
-                "The git index uses a format not supported by this version of Wheelhouse. " +
-                "Run 'git update-index --refresh' or 'git reset' in the repository to rebuild it " +
-                "in a compatible format.", ex);
+            _logger.LogWarning(ex, "libgit2 status failed, falling back to git.exe");
+            return await GitCli.GetStatusAsync(CurrentRepository!.Path, ct);
         }
-
-        var staged = status
-            .Where(e => e.State.HasFlag(FileStatus.NewInIndex)
-                     || e.State.HasFlag(FileStatus.ModifiedInIndex)
-                     || e.State.HasFlag(FileStatus.DeletedFromIndex)
-                     || e.State.HasFlag(FileStatus.RenamedInIndex))
-            .Select(e => MapEntry(e, staged: true))
-            .ToList();
-
-        var unstaged = status
-            .Where(e => e.State.HasFlag(FileStatus.ModifiedInWorkdir)
-                     || e.State.HasFlag(FileStatus.DeletedFromWorkdir))
-            .Select(e => MapEntry(e, staged: false))
-            .ToList();
-
-        var conflicted = status
-            .Where(e => e.State.HasFlag(FileStatus.Conflicted))
-            .Select(e => MapEntry(e, staged: false))
-            .ToList();
-
-        var untracked = status
-            .Where(e => e.State.HasFlag(FileStatus.NewInWorkdir))
-            .Select(e => MapEntry(e, staged: false))
-            .ToList();
-
-        return Task.FromResult(new WorkingTreeStatus(staged, unstaged, conflicted, untracked));
     }
 
     public Task<IReadOnlyList<BranchInfo>> GetBranchesAsync(CancellationToken ct = default)
@@ -112,11 +83,26 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
         return Task.FromResult<IReadOnlyList<CommitInfo>>(commits);
     }
 
-    public Task<IReadOnlyList<FileDiff>> GetStagedDiffAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<FileDiff>> GetStagedDiffAsync(CancellationToken ct = default)
     {
         EnsureOpen();
-        var diff = _repo!.Diff.Compare<Patch>(_repo.Head.Tip?.Tree, DiffTargets.Index);
-        return Task.FromResult<IReadOnlyList<FileDiff>>(MapPatch(diff));
+        try
+        {
+            var diff = _repo!.Diff.Compare<Patch>(_repo.Head.Tip?.Tree, DiffTargets.Index);
+            return MapPatch(diff);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "libgit2 staged diff failed, falling back to git.exe");
+            var status = await GitCli.GetStatusAsync(CurrentRepository!.Path, ct);
+            var diffs = new List<FileDiff>();
+            foreach (var entry in status.StagedEntries)
+            {
+                var d = await GitCli.GetFileDiffAsync(CurrentRepository.Path, entry.FilePath, staged: true, ct);
+                if (d is not null) diffs.Add(d);
+            }
+            return diffs;
+        }
     }
 
     public Task<IReadOnlyList<FileDiff>> GetUnstagedDiffAsync(CancellationToken ct = default)
@@ -126,54 +112,98 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
         return Task.FromResult<IReadOnlyList<FileDiff>>(MapPatch(diff));
     }
 
-    public Task<FileDiff?> GetFileDiffAsync(string filePath, bool staged, CancellationToken ct = default)
+    public async Task<FileDiff?> GetFileDiffAsync(string filePath, bool staged, CancellationToken ct = default)
     {
         EnsureOpen();
-        var diff = staged
-            ? _repo!.Diff.Compare<Patch>(_repo.Head.Tip?.Tree, DiffTargets.Index)
-            : _repo!.Diff.Compare<Patch>(_repo.Head.Tip?.Tree, DiffTargets.WorkingDirectory);
+        try
+        {
+            var diff = staged
+                ? _repo!.Diff.Compare<Patch>(_repo.Head.Tip?.Tree, DiffTargets.Index)
+                : _repo!.Diff.Compare<Patch>(_repo.Head.Tip?.Tree, DiffTargets.WorkingDirectory);
 
-        var result = MapPatch(diff).FirstOrDefault(f => f.NewPath == filePath || f.OldPath == filePath);
-        return Task.FromResult(result);
+            return MapPatch(diff).FirstOrDefault(f => f.NewPath == filePath || f.OldPath == filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "libgit2 diff failed for {Path}, falling back to git.exe", filePath);
+            return await GitCli.GetFileDiffAsync(CurrentRepository!.Path, filePath, staged, ct);
+        }
     }
 
-    public Task StageAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
+    public async Task StageAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
     {
         EnsureOpen();
-        Commands.Stage(_repo!, filePaths);
-        return Task.CompletedTask;
+        var paths = filePaths.ToList();
+        try
+        {
+            Commands.Stage(_repo!, paths);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "libgit2 stage failed, falling back to git.exe");
+            await GitCli.StageAsync(CurrentRepository!.Path, paths, ct);
+        }
     }
 
-    public Task UnstageAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
+    public async Task UnstageAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
     {
         EnsureOpen();
-        Commands.Unstage(_repo!, filePaths);
-        return Task.CompletedTask;
+        var paths = filePaths.ToList();
+        try
+        {
+            Commands.Unstage(_repo!, paths);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "libgit2 unstage failed, falling back to git.exe");
+            await GitCli.UnstageAsync(CurrentRepository!.Path, paths, ct);
+        }
     }
 
-    public Task StageAllAsync(CancellationToken ct = default)
+    public async Task StageAllAsync(CancellationToken ct = default)
     {
         EnsureOpen();
-        Commands.Stage(_repo!, "*");
-        return Task.CompletedTask;
+        try
+        {
+            Commands.Stage(_repo!, "*");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "libgit2 stage-all failed, falling back to git.exe");
+            await GitCli.StageAllAsync(CurrentRepository!.Path, ct);
+        }
     }
 
-    public Task UnstageAllAsync(CancellationToken ct = default)
+    public async Task UnstageAllAsync(CancellationToken ct = default)
     {
         EnsureOpen();
-        Commands.Unstage(_repo!, "*");
-        return Task.CompletedTask;
+        try
+        {
+            Commands.Unstage(_repo!, "*");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "libgit2 unstage-all failed, falling back to git.exe");
+            await GitCli.UnstageAllAsync(CurrentRepository!.Path, ct);
+        }
     }
 
-    public Task CommitAsync(string message, bool amend = false, CancellationToken ct = default)
+    public async Task CommitAsync(string message, bool amend = false, CancellationToken ct = default)
     {
         EnsureOpen();
-        var signature = _repo!.Config.BuildSignature(DateTimeOffset.Now);
-        if (amend)
-            _repo.Commit(message, signature, signature, new CommitOptions { AmendPreviousCommit = true });
-        else
-            _repo.Commit(message, signature, signature);
-        return Task.CompletedTask;
+        try
+        {
+            var signature = _repo!.Config.BuildSignature(DateTimeOffset.Now);
+            if (amend)
+                _repo.Commit(message, signature, signature, new CommitOptions { AmendPreviousCommit = true });
+            else
+                _repo.Commit(message, signature, signature);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "libgit2 commit failed, falling back to git.exe");
+            await GitCli.CommitAsync(CurrentRepository!.Path, message, amend, ct);
+        }
     }
 
     public Task FetchAsync(string? remoteName = null, CancellationToken ct = default)
@@ -211,6 +241,37 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
     private void EnsureOpen()
     {
         if (_repo is null) throw new InvalidOperationException("No repository is open.");
+    }
+
+    private WorkingTreeStatus GetStatusViaLibGit2()
+    {
+        var status = _repo!.RetrieveStatus(new StatusOptions());
+
+        var staged = status
+            .Where(e => e.State.HasFlag(FileStatus.NewInIndex)
+                     || e.State.HasFlag(FileStatus.ModifiedInIndex)
+                     || e.State.HasFlag(FileStatus.DeletedFromIndex)
+                     || e.State.HasFlag(FileStatus.RenamedInIndex))
+            .Select(e => MapEntry(e, staged: true))
+            .ToList();
+
+        var unstaged = status
+            .Where(e => e.State.HasFlag(FileStatus.ModifiedInWorkdir)
+                     || e.State.HasFlag(FileStatus.DeletedFromWorkdir))
+            .Select(e => MapEntry(e, staged: false))
+            .ToList();
+
+        var conflicted = status
+            .Where(e => e.State.HasFlag(FileStatus.Conflicted))
+            .Select(e => MapEntry(e, staged: false))
+            .ToList();
+
+        var untracked = status
+            .Where(e => e.State.HasFlag(FileStatus.NewInWorkdir))
+            .Select(e => MapEntry(e, staged: false))
+            .ToList();
+
+        return new WorkingTreeStatus(staged, unstaged, conflicted, untracked);
     }
 
     private static CommitInfo MapCommit(Commit c) => new(
@@ -254,51 +315,5 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
             p.Status == ChangeKind.Renamed,
             p.LinesAdded,
             p.LinesDeleted,
-            ParseHunks(p.Patch))).ToList();
-
-    private static IReadOnlyList<DiffHunk> ParseHunks(string rawPatch)
-    {
-        var hunks = new List<DiffHunk>();
-        if (string.IsNullOrEmpty(rawPatch)) return hunks;
-
-        DiffHunk? current = null;
-        var lines = new List<DiffLine>();
-        string? header = null;
-        int oldLine = 0, newLine = 0;
-
-        foreach (var line in rawPatch.Split('\n'))
-        {
-            if (line.StartsWith("@@"))
-            {
-                if (current is not null) hunks.Add(current with { Lines = lines.ToList() });
-                header = line;
-                lines = [];
-                ParseHunkHeader(line, out oldLine, out newLine);
-                current = new DiffHunk(header, []);
-            }
-            else if (current is not null)
-            {
-                if (line.StartsWith('+'))
-                    lines.Add(new DiffLine(DiffLineType.Added, line[1..], null, newLine++));
-                else if (line.StartsWith('-'))
-                    lines.Add(new DiffLine(DiffLineType.Removed, line[1..], oldLine++, null));
-                else
-                    lines.Add(new DiffLine(DiffLineType.Context, line.Length > 0 ? line[1..] : line, oldLine++, newLine++));
-            }
-        }
-
-        if (current is not null) hunks.Add(current with { Lines = lines.ToList() });
-        return hunks;
-    }
-
-    private static void ParseHunkHeader(string header, out int oldStart, out int newStart)
-    {
-        oldStart = 1; newStart = 1;
-        var match = System.Text.RegularExpressions.Regex.Match(header, @"@@ -(\d+)(?:,\d+)? \+(\d+)");
-        if (match.Success)
-        {
-            oldStart = int.Parse(match.Groups[1].Value);
-            newStart = int.Parse(match.Groups[2].Value);
-        }
-    }
+            DiffParser.ParseHunks(p.Patch))).ToList();
 }
