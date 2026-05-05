@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Backgrounds -->
+    <SolidColorBrush x:Key="BrushBackground"    Color="#F3F3F3" />
+    <SolidColorBrush x:Key="BrushSurface"       Color="#FFFFFF" />
+    <SolidColorBrush x:Key="BrushSurfaceAlt"    Color="#E8E8E8" />
+    <SolidColorBrush x:Key="BrushSidebarBg"     Color="#ECECEC" />
+
+    <!-- Foregrounds -->
+    <SolidColorBrush x:Key="BrushOnBackground"  Color="#1A1A1A" />
+    <SolidColorBrush x:Key="BrushOnSurface"     Color="#1A1A1A" />
+    <SolidColorBrush x:Key="BrushOnSurfaceMuted" Color="#666666" />
+
+    <!-- Borders -->
+    <SolidColorBrush x:Key="BrushBorder"        Color="#CCCCCC" />
+    <SolidColorBrush x:Key="BrushBorderSubtle"  Color="#E0E0E0" />
+
+    <!-- Accent / Primary -->
+    <SolidColorBrush x:Key="BrushPrimary"       Color="#0969DA" />
+    <SolidColorBrush x:Key="BrushOnPrimary"     Color="#FFFFFF" />
+    <SolidColorBrush x:Key="BrushPrimaryHover"  Color="#0860CA" />
+
+    <!-- Status colors -->
+    <SolidColorBrush x:Key="BrushAdded"         Color="#1A7F37" />
+    <SolidColorBrush x:Key="BrushRemoved"       Color="#CF222E" />
+    <SolidColorBrush x:Key="BrushModified"      Color="#9A6700" />
+    <SolidColorBrush x:Key="BrushConflicted"    Color="#BC4C00" />
+    <SolidColorBrush x:Key="BrushUntracked"     Color="#0969DA" />
+
+    <!-- Diff backgrounds -->
+    <SolidColorBrush x:Key="BrushDiffAdded"     Color="#E6FFEC" />
+    <SolidColorBrush x:Key="BrushDiffRemoved"   Color="#FFEBE9" />
+    <SolidColorBrush x:Key="BrushDiffHeader"    Color="#DDF4FF" />
+
+    <!-- Status bar -->
+    <SolidColorBrush x:Key="BrushStatusBar"     Color="#0969DA" />
+    <SolidColorBrush x:Key="BrushOnStatusBar"   Color="#FFFFFF" />
+
+</ResourceDictionary>

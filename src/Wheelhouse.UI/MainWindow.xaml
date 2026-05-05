@@ -1,0 +1,152 @@
+<Window x:Class="Wheelhouse.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Wheelhouse.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Height="800" Width="1280"
+        MinHeight="500" MinWidth="800"
+        Background="{DynamicResource BrushBackground}">
+
+    <Window.InputBindings>
+        <KeyBinding Key="OemTilde" Modifiers="Ctrl" Command="{Binding ToggleTerminalCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+
+        <!-- Menu -->
+        <Menu DockPanel.Dock="Top"
+              Background="{DynamicResource BrushSurface}"
+              Foreground="{DynamicResource BrushOnSurface}">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open Repository..." Command="{Binding OpenRepositoryCommand}" />
+                <MenuItem Header="_Clone Repository..." IsEnabled="False" />
+                <MenuItem Header="Initialize _New Repository..." IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="E_xit" Click="OnExitClick" />
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="_Terminal" Command="{Binding ToggleTerminalCommand}"
+                          IsCheckable="True" IsChecked="{Binding IsTerminalVisible}" />
+                <Separator />
+                <MenuItem Header="_Theme">
+                    <MenuItem Header="_Light"  Command="{Binding SetThemeCommand}" CommandParameter="Light" />
+                    <MenuItem Header="_Dark"   Command="{Binding SetThemeCommand}" CommandParameter="Dark" />
+                    <MenuItem Header="_System" Command="{Binding SetThemeCommand}" CommandParameter="System" />
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Repository" IsEnabled="False" />
+            <MenuItem Header="_Branch"     IsEnabled="False" />
+            <MenuItem Header="_Commit"     IsEnabled="False" />
+            <MenuItem Header="_Remote"     IsEnabled="False" />
+            <MenuItem Header="_Tools"      IsEnabled="False" />
+            <MenuItem Header="_Help"       IsEnabled="False" />
+        </Menu>
+
+        <!-- Toolbar -->
+        <ToolBarTray DockPanel.Dock="Top"
+                     Background="{DynamicResource BrushSurface}">
+            <ToolBar Background="{DynamicResource BrushSurface}"
+                     Foreground="{DynamicResource BrushOnSurface}">
+                <Button Content="Open"   Command="{Binding OpenRepositoryCommand}" ToolTip="Open Repository" />
+                <Separator />
+                <Button Content="Fetch"  IsEnabled="False" ToolTip="Fetch" />
+                <Button Content="Pull"   IsEnabled="False" ToolTip="Pull" />
+                <Button Content="Push"   IsEnabled="False" ToolTip="Push" />
+                <Separator />
+                <Button Content="Branch" IsEnabled="False" ToolTip="Create Branch" />
+                <Button Content="Stash"  IsEnabled="False" ToolTip="Stash Changes" />
+            </ToolBar>
+        </ToolBarTray>
+
+        <!-- Status bar -->
+        <StatusBar DockPanel.Dock="Bottom"
+                   Background="{DynamicResource BrushStatusBar}"
+                   Foreground="{DynamicResource BrushOnStatusBar}">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusText}"
+                           Foreground="{DynamicResource BrushOnStatusBar}" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <!-- Main content: sidebar + content area + terminal -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="{Binding IsTerminalVisible, Converter={StaticResource BoolToRowHeightConverter}, ConverterParameter=200}" />
+            </Grid.RowDefinitions>
+
+            <!-- Sidebar + content area -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" MinWidth="150" MaxWidth="400" />
+                    <ColumnDefinition Width="4" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Repository sidebar -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource BrushSidebarBg}"
+                        BorderBrush="{DynamicResource BrushBorder}"
+                        BorderThickness="0,0,1,0">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top"
+                                   Text="REPOSITORIES"
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                   Margin="8,8,8,4" />
+                        <TextBlock Text="Open a repository to get started."
+                                   Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                   TextWrapping="Wrap"
+                                   Margin="8,4"
+                                   FontSize="{StaticResource FontSizeSmall}" />
+                    </DockPanel>
+                </Border>
+
+                <GridSplitter Grid.Column="1" Width="4"
+                              HorizontalAlignment="Stretch"
+                              Background="{DynamicResource BrushBorder}" />
+
+                <!-- Tab area -->
+                <TabControl Grid.Column="2"
+                            Background="{DynamicResource BrushBackground}"
+                            BorderThickness="0">
+                    <TabItem Header="Working Tree">
+                        <TextBlock Text="Stage and commit your changes here."
+                                   Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </TabItem>
+                    <TabItem Header="Log">
+                        <TextBlock Text="Commit history will appear here."
+                                   Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </TabItem>
+                </TabControl>
+            </Grid>
+
+            <!-- Terminal splitter -->
+            <GridSplitter Grid.Row="1" Height="4"
+                          HorizontalAlignment="Stretch"
+                          Background="{DynamicResource BrushBorder}"
+                          Visibility="{Binding IsTerminalVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+            <!-- Terminal pane -->
+            <Border Grid.Row="2"
+                    Background="#0D1117"
+                    Visibility="{Binding IsTerminalVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="Terminal (coming in Phase 5)"
+                           Foreground="#7D8590"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontFamily="{StaticResource FontMono}" />
+            </Border>
+        </Grid>
+
+    </DockPanel>
+</Window>

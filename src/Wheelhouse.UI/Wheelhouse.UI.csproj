@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+<StartupObject>Wheelhouse.UI.App</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.0.90" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Wheelhouse.Core\Wheelhouse.Core.csproj" />
+    <ProjectReference Include="..\Wheelhouse.Hosting.Abstractions\Wheelhouse.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="..\Wheelhouse.Hosting.GitHub\Wheelhouse.Hosting.GitHub.csproj" />
+    <ProjectReference Include="..\Wheelhouse.Hosting.AzureDevOps\Wheelhouse.Hosting.AzureDevOps.csproj" />
+    <ProjectReference Include="..\Wheelhouse.Terminal\Wheelhouse.Terminal.csproj" />
+  </ItemGroup>
+
+</Project>
