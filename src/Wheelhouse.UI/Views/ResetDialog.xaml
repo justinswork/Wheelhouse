@@ -1,0 +1,26 @@
+<Window x:Class="Wheelhouse.UI.Views.ResetDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Reset to Commit"
+        Height="220" Width="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Cancel" IsCancel="True" Padding="14,6" Margin="0,0,8,0"
+                    Background="Transparent" BorderThickness="1" />
+            <Button Content="Reset" IsDefault="True" Padding="14,6" Click="OnResetClick" />
+        </StackPanel>
+        <StackPanel>
+            <TextBlock x:Name="CommitLabel" FontSize="12" Margin="0,0,0,10"
+                       TextTrimming="CharacterEllipsis" />
+            <RadioButton x:Name="SoftRadio" Content="Soft — keep changes staged" IsChecked="True"
+                         FontSize="12" Margin="0,0,0,6" />
+            <RadioButton x:Name="MixedRadio" Content="Mixed — keep changes unstaged"
+                         FontSize="12" Margin="0,0,0,6" />
+            <RadioButton x:Name="HardRadio" Content="Hard — discard all changes"
+                         FontSize="12" Foreground="#CF222E" />
+        </StackPanel>
+    </DockPanel>
+</Window>

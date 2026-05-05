@@ -12,6 +12,14 @@ public sealed class RepositoryClosedMessage { }
 
 public sealed class WorkingTreeChangedMessage { }
 
+public sealed class BranchChangedMessage { }
+
+public sealed class StashChangedMessage { }
+
+public sealed class TagChangedMessage { }
+
+public sealed class RemoteChangedMessage { }
+
 public sealed class FileSelectedForDiffMessage
 {
     public string FilePath { get; }

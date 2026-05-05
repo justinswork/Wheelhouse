@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using Wheelhouse.Core.Models;
 
 namespace Wheelhouse.Core.Services;
@@ -91,6 +92,56 @@ internal static class GitCli
     internal static Task UnstageAllAsync(string repoPath, CancellationToken ct = default) =>
         RunAsync(repoPath, "restore --staged .", ct);
 
+    internal static Task StageHunkAsync(string repoPath, string filePath, DiffHunk hunk, bool isNew, CancellationToken ct = default) =>
+        ApplyPatchAsync(repoPath, BuildHunkPatch(filePath, hunk, isNew, false), cached: true, reverse: false, ct);
+
+    internal static Task UnstageHunkAsync(string repoPath, string filePath, DiffHunk hunk, CancellationToken ct = default) =>
+        ApplyPatchAsync(repoPath, BuildHunkPatch(filePath, hunk, false, false), cached: true, reverse: true, ct);
+
+    internal static Task DiscardHunkAsync(string repoPath, string filePath, DiffHunk hunk, CancellationToken ct = default) =>
+        ApplyPatchAsync(repoPath, BuildHunkPatch(filePath, hunk, false, false), cached: false, reverse: true, ct);
+
+    internal static string BuildHunkPatch(string filePath, DiffHunk hunk, bool isNew, bool isDeleted)
+    {
+        // git apply requires Unix line endings (\n) regardless of platform
+        var sb = new System.Text.StringBuilder();
+        var oldPath = isNew ? "/dev/null" : $"a/{filePath}";
+        var newPath = isDeleted ? "/dev/null" : $"b/{filePath}";
+        sb.Append($"diff --git a/{filePath} b/{filePath}\n");
+        if (isNew) sb.Append("new file mode 100644\n");
+        else if (isDeleted) sb.Append("deleted file mode 100644\n");
+        sb.Append($"--- {oldPath}\n");
+        sb.Append($"+++ {newPath}\n");
+        sb.Append(hunk.Header.TrimEnd('\r', '\n')).Append('\n');
+        foreach (var line in hunk.Lines)
+        {
+            var prefix = line.Type switch
+            {
+                DiffLineType.Added   => "+",
+                DiffLineType.Removed => "-",
+                _                    => " "
+            };
+            sb.Append(prefix).Append(line.Content.TrimEnd('\r')).Append('\n');
+        }
+        return sb.ToString();
+    }
+
+    private static async Task ApplyPatchAsync(string repoPath, string patch, bool cached, bool reverse, CancellationToken ct)
+    {
+        var cachedFlag  = cached  ? " --cached" : string.Empty;
+        var reverseFlag = reverse ? " -R"       : string.Empty;
+        var patchFile = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(patchFile, patch, new System.Text.UTF8Encoding(false), ct);
+            await RunAsync(repoPath, $"apply{cachedFlag}{reverseFlag} \"{patchFile}\"", ct);
+        }
+        finally
+        {
+            File.Delete(patchFile);
+        }
+    }
+
     internal static async Task CommitAsync(string repoPath, string message, bool amend, CancellationToken ct = default)
     {
         var amendFlag = amend ? " --amend" : string.Empty;
@@ -111,6 +162,13 @@ internal static class GitCli
     {
         var cachedFlag = staged ? "--cached " : string.Empty;
         var raw = await RunAsync(repoPath, $"diff {cachedFlag}-- \"{filePath}\"", ct);
+
+        if (string.IsNullOrEmpty(raw) && !staged)
+        {
+            var tracked = await RunAsync(repoPath, $"ls-files -- \"{filePath}\"", ct);
+            if (string.IsNullOrWhiteSpace(tracked))
+                raw = await RunDiffNoIndexAsync(repoPath, filePath, ct);
+        }
 
         if (string.IsNullOrEmpty(raw)) return null;
 
@@ -137,6 +195,195 @@ internal static class GitCli
             newPath ?? filePath,
             isBinary, isNew, isDeleted, isRenamed,
             added, removed, hunks);
+    }
+
+    // Branch management
+
+    internal static Task CheckoutBranchAsync(string repoPath, string friendlyName, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"checkout \"{friendlyName}\"", ct);
+
+    internal static Task CreateBranchAsync(string repoPath, string name, string? startPoint, bool checkout, CancellationToken ct = default)
+    {
+        var cmd = checkout ? "checkout -b" : "branch";
+        var start = startPoint is not null ? $" \"{startPoint}\"" : string.Empty;
+        return RunAsync(repoPath, $"{cmd} \"{name}\"{start}", ct);
+    }
+
+    internal static Task DeleteBranchAsync(string repoPath, string friendlyName, bool force, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"branch {(force ? "-D" : "-d")} \"{friendlyName}\"", ct);
+
+    internal static Task RenameBranchAsync(string repoPath, string currentName, string newName, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"branch -m \"{currentName}\" \"{newName}\"", ct);
+
+    internal static Task DeleteRemoteBranchAsync(string repoPath, string remoteName, string branchName, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"push \"{remoteName}\" --delete \"{branchName}\"", ct);
+
+    // Tags
+
+    internal static async Task<IReadOnlyList<TagInfo>> GetTagsAsync(string repoPath, CancellationToken ct = default)
+    {
+        string output;
+        try
+        {
+            // Format: name\tobjecttype\tobjectname\tcreatordate\tsubject
+            output = await RunAsync(repoPath, "tag -l --format=%(refname:short)%09%(objecttype)%09%(objectname)%09%(creatordate:iso-strict)%09%(contents:subject)", ct);
+        }
+        catch { return []; }
+
+        var tags = new List<TagInfo>();
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = line.Split('\t', 5);
+            if (parts.Length < 3) continue;
+            var name = parts[0].Trim();
+            var isAnnotated = parts[1].Trim() == "tag";
+            var sha = parts[2].Trim();
+            DateTimeOffset? when = parts.Length >= 4 && DateTimeOffset.TryParse(parts[3].Trim(), out var dt) ? dt : null;
+            var msg = parts.Length >= 5 ? parts[4].Trim() : null;
+            if (!string.IsNullOrEmpty(name))
+                tags.Add(new TagInfo(name, sha, isAnnotated, when, string.IsNullOrEmpty(msg) ? null : msg));
+        }
+        return tags;
+    }
+
+    internal static Task CreateTagAsync(string repoPath, string name, string? targetSha, string? message, CancellationToken ct = default)
+    {
+        var target = targetSha is not null ? $" \"{targetSha}\"" : string.Empty;
+        if (message is not null)
+            return RunAsync(repoPath, $"tag -a \"{name}\"{target} -m \"{message.Replace("\"", "\\\"")}\"", ct);
+        return RunAsync(repoPath, $"tag \"{name}\"{target}", ct);
+    }
+
+    internal static Task DeleteTagAsync(string repoPath, string name, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"tag -d \"{name}\"", ct);
+
+    internal static Task PushTagAsync(string repoPath, string name, string? remoteName, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"push \"{remoteName ?? "origin"}\" \"{name}\"", ct);
+
+    // Remotes
+
+    internal static async Task<IReadOnlyList<RemoteInfo>> GetRemotesAsync(string repoPath, CancellationToken ct = default)
+    {
+        string output;
+        try { output = await RunAsync(repoPath, "remote -v", ct); }
+        catch { return []; }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var remotes = new List<RemoteInfo>();
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var tab = line.IndexOf('\t');
+            if (tab < 0) continue;
+            var name = line[..tab].Trim();
+            if (!seen.Add(name)) continue;
+            var rest = line[(tab + 1)..].Trim();
+            // "url (fetch)" — strip the trailing " (fetch)"/"  (push)"
+            var paren = rest.LastIndexOf('(');
+            var url = paren > 0 ? rest[..paren].Trim() : rest;
+            remotes.Add(new RemoteInfo(name, url));
+        }
+        return remotes;
+    }
+
+    internal static Task AddRemoteAsync(string repoPath, string name, string url, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"remote add \"{name}\" \"{url}\"", ct);
+
+    internal static Task RemoveRemoteAsync(string repoPath, string name, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"remote remove \"{name}\"", ct);
+
+    internal static Task RenameRemoteAsync(string repoPath, string name, string newName, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"remote rename \"{name}\" \"{newName}\"", ct);
+
+    internal static Task PruneRemoteAsync(string repoPath, string name, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"remote prune \"{name}\"", ct);
+
+    // Stash
+
+    internal static async Task<IReadOnlyList<StashInfo>> GetStashesAsync(string repoPath, CancellationToken ct = default)
+    {
+        var output = await RunAsync(repoPath, "stash list --format=%gd%x09%gs%x09%H%x09%aI", ct);
+        var stashes = new List<StashInfo>();
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = line.Split('\t', 4);
+            if (parts.Length < 4) continue;
+            var refName = parts[0];
+            var message = parts[1];
+            var sha = parts[2];
+            if (!DateTimeOffset.TryParse(parts[3].Trim(), out var when)) when = DateTimeOffset.Now;
+            var m = Regex.Match(refName, @"\{(\d+)\}");
+            var index = m.Success ? int.Parse(m.Groups[1].Value) : stashes.Count;
+            stashes.Add(new StashInfo(index, message, sha, when));
+        }
+        return stashes;
+    }
+
+    internal static Task StashAsync(string repoPath, string? message, bool includeUntracked, CancellationToken ct = default)
+    {
+        var u = includeUntracked ? " -u" : string.Empty;
+        var m = message is not null ? $" -m \"{message.Replace("\"", "\\\"")}\"" : string.Empty;
+        return RunAsync(repoPath, $"stash push{u}{m}", ct);
+    }
+
+    internal static Task ApplyStashAsync(string repoPath, int index, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"stash apply stash@{{{index}}}", ct);
+
+    internal static Task PopStashAsync(string repoPath, int index, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"stash pop stash@{{{index}}}", ct);
+
+    internal static Task DropStashAsync(string repoPath, int index, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"stash drop stash@{{{index}}}", ct);
+
+    // Advanced git operations
+
+    internal static Task MergeAsync(string repoPath, string branchName, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"merge \"{branchName}\"", ct);
+
+    internal static Task ResetAsync(string repoPath, string target, ResetMode mode, CancellationToken ct = default)
+    {
+        var flag = mode switch
+        {
+            ResetMode.Soft  => "--soft",
+            ResetMode.Mixed => "--mixed",
+            ResetMode.Hard  => "--hard",
+            _               => "--mixed",
+        };
+        return RunAsync(repoPath, $"reset {flag} {target}", ct);
+    }
+
+    internal static Task RevertAsync(string repoPath, string commitSha, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"revert --no-edit {commitSha}", ct);
+
+    internal static Task CherryPickAsync(string repoPath, string commitSha, CancellationToken ct = default) =>
+        RunAsync(repoPath, $"cherry-pick {commitSha}", ct);
+
+    private static async Task<string> RunDiffNoIndexAsync(string repoPath, string filePath, CancellationToken ct)
+    {
+        var psi = new ProcessStartInfo("git", $"diff --no-index -- /dev/null \"{filePath}\"")
+        {
+            WorkingDirectory = repoPath,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            StandardOutputEncoding = Encoding.UTF8,
+        };
+
+        using var proc = Process.Start(psi)
+            ?? throw new InvalidOperationException("Failed to start git process.");
+
+        var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+        await proc.WaitForExitAsync(ct);
+        var stdout = await stdoutTask;
+
+        // git diff --no-index exits with 1 when files differ (normal), 0 when identical, 2+ on error
+        if (proc.ExitCode > 1)
+        {
+            var stderr = await proc.StandardError.ReadToEndAsync(ct);
+            throw new InvalidOperationException($"git diff --no-index: {stderr.Trim()}");
+        }
+
+        return stdout;
     }
 
     private static FileStatusEntry Entry(string path, string? orig, FileState index, FileState workdir) =>

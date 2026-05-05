@@ -1,0 +1,22 @@
+<Window x:Class="Wheelhouse.UI.Views.StashDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Stash Changes"
+        Height="180" Width="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Cancel" IsCancel="True" Padding="14,6" Margin="0,0,8,0"
+                    Background="Transparent" BorderThickness="1" />
+            <Button Content="Stash" IsDefault="True" Padding="14,6" Click="OnStashClick" />
+        </StackPanel>
+        <StackPanel>
+            <TextBlock Text="Message (optional):" FontSize="12" Margin="0,0,0,4" />
+            <TextBox x:Name="MessageTextBox" FontSize="12" Padding="4" />
+            <CheckBox x:Name="UntrackedCheckBox" Content="Include untracked files" IsChecked="True"
+                      Margin="0,10,0,0" FontSize="12" />
+        </StackPanel>
+    </DockPanel>
+</Window>

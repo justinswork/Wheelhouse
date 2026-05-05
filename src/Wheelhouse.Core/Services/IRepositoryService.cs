@@ -21,9 +21,44 @@ public interface IRepositoryService : IDisposable
     Task UnstageAsync(IEnumerable<string> filePaths, CancellationToken ct = default);
     Task StageAllAsync(CancellationToken ct = default);
     Task UnstageAllAsync(CancellationToken ct = default);
+    Task StageHunkAsync(string filePath, DiffHunk hunk, bool isNew, CancellationToken ct = default);
+    Task UnstageHunkAsync(string filePath, DiffHunk hunk, CancellationToken ct = default);
+    Task DiscardHunkAsync(string filePath, DiffHunk hunk, CancellationToken ct = default);
     Task CommitAsync(string message, bool amend = false, CancellationToken ct = default);
 
     Task FetchAsync(string? remoteName = null, CancellationToken ct = default);
     Task PullAsync(CancellationToken ct = default);
     Task PushAsync(string? remoteName = null, CancellationToken ct = default);
+
+    // Branch management
+    Task CheckoutBranchAsync(string friendlyName, CancellationToken ct = default);
+    Task CreateBranchAsync(string name, string? startPoint = null, bool checkout = false, CancellationToken ct = default);
+    Task DeleteBranchAsync(string friendlyName, bool force = false, CancellationToken ct = default);
+    Task DeleteRemoteBranchAsync(string remoteName, string branchName, CancellationToken ct = default);
+    Task RenameBranchAsync(string currentFriendlyName, string newName, CancellationToken ct = default);
+
+    // Tags
+    Task<IReadOnlyList<TagInfo>> GetTagsAsync(CancellationToken ct = default);
+    Task CreateTagAsync(string name, string? targetSha = null, string? message = null, CancellationToken ct = default);
+    Task DeleteTagAsync(string name, CancellationToken ct = default);
+    Task PushTagAsync(string name, string? remoteName = null, CancellationToken ct = default);
+
+    // Remotes
+    Task<IReadOnlyList<RemoteInfo>> GetRemotesAsync(CancellationToken ct = default);
+    Task AddRemoteAsync(string name, string url, CancellationToken ct = default);
+    Task RemoveRemoteAsync(string name, CancellationToken ct = default);
+    Task RenameRemoteAsync(string name, string newName, CancellationToken ct = default);
+    Task PruneRemoteAsync(string name, CancellationToken ct = default);
+
+    // Stash
+    Task<IReadOnlyList<StashInfo>> GetStashesAsync(CancellationToken ct = default);
+    Task StashAsync(string? message = null, bool includeUntracked = true, CancellationToken ct = default);
+    Task ApplyStashAsync(int index, bool drop = false, CancellationToken ct = default);
+    Task DropStashAsync(int index, CancellationToken ct = default);
+
+    // Advanced git operations
+    Task MergeAsync(string branchName, CancellationToken ct = default);
+    Task ResetAsync(string target, ResetMode mode, CancellationToken ct = default);
+    Task RevertAsync(string commitSha, CancellationToken ct = default);
+    Task CherryPickAsync(string commitSha, CancellationToken ct = default);
 }

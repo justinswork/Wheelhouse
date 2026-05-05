@@ -35,15 +35,23 @@
                    FontSize="12"
                    Visibility="{Binding HasRepository, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
 
-        <!-- Branch/tag tree -->
+        <!-- Branch/stash/tag/remote tree -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
 
                 <!-- Local Branches -->
                 <Expander IsExpanded="True" Margin="0,4,0,0">
                     <Expander.Header>
-                        <TextBlock Text="LOCAL BRANCHES" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="+" Padding="4,0" FontSize="13"
+                                    Background="Transparent" BorderThickness="0"
+                                    Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                    Command="{Binding DataContext.CreateBranchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    ToolTip="New branch" />
+                            <TextBlock Text="LOCAL BRANCHES" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
                     </Expander.Header>
                     <ItemsControl ItemsSource="{Binding LocalBranches}" Margin="8,0,0,0">
                         <ItemsControl.ItemTemplate>
@@ -58,6 +66,15 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Checkout" Command="{Binding CheckoutCommand}" />
+                                            <MenuItem Header="Merge into Current" Command="{Binding MergeIntoCurrentCommand}" />
+                                            <Separator />
+                                            <MenuItem Header="Rename..." Command="{Binding RenameCommand}" />
+                                            <MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
                                     <DockPanel>
                                         <TextBlock DockPanel.Dock="Left" Text="⎇ " FontSize="11"
                                                    Foreground="{DynamicResource BrushPrimary}"
@@ -80,6 +97,9 @@
                                             </TextBlock.Style>
                                         </TextBlock>
                                     </DockPanel>
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding CheckoutCommand}" />
+                                    </Border.InputBindings>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -96,9 +116,167 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:BranchItemViewModel}">
                                 <Border Padding="4,3">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlt}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Checkout" Command="{Binding CheckoutCommand}" />
+                                            <Separator />
+                                            <MenuItem Header="Delete Remote Branch..." Command="{Binding DeleteRemoteBranchCommand}" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
                                     <TextBlock Text="{Binding DisplayName}" FontSize="12"
                                                Foreground="{DynamicResource BrushOnSurfaceMuted}"
                                                TextTrimming="CharacterEllipsis" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+
+                <!-- Tags -->
+                <Expander IsExpanded="False" Margin="0,4,0,0"
+                          Visibility="{Binding HasRepository, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Expander.Header>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="+" Padding="4,0" FontSize="13"
+                                    Background="Transparent" BorderThickness="0"
+                                    Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                    Command="{Binding DataContext.CreateTagCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    ToolTip="New tag" />
+                            <TextBlock Text="TAGS" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Expander.Header>
+                    <ItemsControl ItemsSource="{Binding Tags}" Margin="8,0,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:TagItemViewModel}">
+                                <Border Padding="4,3">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlt}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Push Tag" Command="{Binding PushCommand}" />
+                                            <Separator />
+                                            <MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <DockPanel>
+                                        <TextBlock Text="{Binding RelativeDate}" DockPanel.Dock="Right"
+                                                   FontSize="10" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                                   VerticalAlignment="Center" Margin="4,0,0,0" />
+                                        <TextBlock Text="{Binding Name}" FontSize="12"
+                                                   Foreground="{DynamicResource BrushOnSurface}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+
+                <!-- Remotes -->
+                <Expander IsExpanded="False" Margin="0,4,0,0"
+                          Visibility="{Binding HasRepository, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Expander.Header>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="+" Padding="4,0" FontSize="13"
+                                    Background="Transparent" BorderThickness="0"
+                                    Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                    Command="{Binding DataContext.AddRemoteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    ToolTip="Add remote" />
+                            <TextBlock Text="REMOTES" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Expander.Header>
+                    <ItemsControl ItemsSource="{Binding Remotes}" Margin="8,0,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:RemoteItemViewModel}">
+                                <Border Padding="4,3">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlt}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Fetch" Command="{Binding FetchCommand}" />
+                                            <MenuItem Header="Prune" Command="{Binding PruneCommand}" />
+                                            <Separator />
+                                            <MenuItem Header="Rename..." Command="{Binding RenameCommand}" />
+                                            <MenuItem Header="Remove" Command="{Binding RemoveCommand}" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <DockPanel>
+                                        <TextBlock Text="{Binding Url}" DockPanel.Dock="Bottom"
+                                                   FontSize="10" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource BrushOnSurface}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+
+                <!-- Stashes -->
+                <Expander IsExpanded="True" Margin="0,4,0,0"
+                          Visibility="{Binding HasStashes, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Expander.Header>
+                        <TextBlock Text="STASHES" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                    </Expander.Header>
+                    <ItemsControl ItemsSource="{Binding Stashes}" Margin="8,0,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:StashItemViewModel}">
+                                <Border Padding="4,3">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BrushSurfaceAlt}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Apply" Command="{Binding ApplyCommand}" />
+                                            <MenuItem Header="Pop (Apply and Drop)" Command="{Binding PopCommand}" />
+                                            <Separator />
+                                            <MenuItem Header="Drop" Command="{Binding DropCommand}" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <DockPanel>
+                                        <TextBlock Text="{Binding RelativeDate}" DockPanel.Dock="Right"
+                                                   FontSize="10" Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                                   VerticalAlignment="Center" Margin="4,0,0,0" />
+                                        <TextBlock Text="{Binding Message}" FontSize="12"
+                                                   Foreground="{DynamicResource BrushOnSurface}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

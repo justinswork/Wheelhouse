@@ -13,6 +13,7 @@
 
     <Window.InputBindings>
         <KeyBinding Key="OemTilde" Modifiers="Ctrl" Command="{Binding ToggleTerminalCommand}" />
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenRepositoryCommand}" />
     </Window.InputBindings>
 
     <DockPanel>
@@ -43,7 +44,19 @@
                 <MenuItem Header="_Pull"   Command="{Binding PullCommand}" />
                 <MenuItem Header="P_ush"   Command="{Binding PushCommand}" />
             </MenuItem>
-            <MenuItem Header="_Branch"  IsEnabled="False" />
+            <MenuItem Header="_Branch">
+                <MenuItem Header="_Create Branch..." Command="{Binding CreateBranchCommand}" />
+                <Separator />
+                <MenuItem Header="_Stash Changes..." Command="{Binding StashChangesCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Tag">
+                <MenuItem Header="_Create Tag..." Command="{Binding CreateTagCommand}" />
+            </MenuItem>
+            <MenuItem Header="Re_mote">
+                <MenuItem Header="_Add Remote..." Command="{Binding AddRemoteCommand}" />
+                <Separator />
+                <MenuItem Header="_Fetch All" Command="{Binding FetchCommand}" />
+            </MenuItem>
             <MenuItem Header="_Commit"  IsEnabled="False" />
             <MenuItem Header="_Tools"   IsEnabled="False" />
             <MenuItem Header="_Help"    IsEnabled="False" />
@@ -52,20 +65,25 @@
         <!-- Toolbar -->
         <ToolBarTray DockPanel.Dock="Top" Background="{DynamicResource BrushSurface}">
             <ToolBar Background="{DynamicResource BrushSurface}">
-                <Button Content="Open"   Command="{Binding OpenRepositoryCommand}" ToolTip="Open Repository (Ctrl+O)" />
+                <Button Content="Open"      Command="{Binding OpenRepositoryCommand}" ToolTip="Open Repository (Ctrl+O)" />
                 <Separator />
-                <Button Content="⇓ Fetch"  Command="{Binding FetchCommand}"  ToolTip="Fetch" />
-                <Button Content="⇓ Pull"   Command="{Binding PullCommand}"   ToolTip="Pull" />
-                <Button Content="⇑ Push"   Command="{Binding PushCommand}"   ToolTip="Push" />
+                <Button Content="⇓ Fetch"   Command="{Binding FetchCommand}"  ToolTip="Fetch" />
+                <Button Content="⇓ Pull"    Command="{Binding PullCommand}"   ToolTip="Pull" />
+                <Button Content="⇑ Push"    Command="{Binding PushCommand}"   ToolTip="Push" />
                 <Separator />
-                <Button Content="⎇ Branch" IsEnabled="False" ToolTip="Create Branch" />
-                <Button Content="✎ Stash"  IsEnabled="False" ToolTip="Stash Changes" />
+                <Button Content="⎇ Branch"  Command="{Binding CreateBranchCommand}" ToolTip="Create Branch" />
+                <Button Content="✎ Stash"   Command="{Binding StashChangesCommand}" ToolTip="Stash Changes" />
             </ToolBar>
         </ToolBarTray>
 
         <!-- Status bar -->
         <StatusBar DockPanel.Dock="Bottom"
                    Background="{DynamicResource BrushStatusBar}">
+            <StatusBarItem>
+                <ProgressBar Width="100" Height="10" IsIndeterminate="True"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"
+                             Margin="0,0,8,0" />
+            </StatusBarItem>
             <StatusBarItem>
                 <TextBlock Text="{Binding StatusText}"
                            Foreground="{DynamicResource BrushOnStatusBar}" />

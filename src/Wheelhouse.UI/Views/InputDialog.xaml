@@ -1,0 +1,19 @@
+<Window x:Class="Wheelhouse.UI.Views.InputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Input" Height="130" Width="380"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BrushBackground}"
+        ShowInTaskbar="False">
+    <StackPanel Margin="12">
+        <TextBlock x:Name="PromptText" FontSize="12" Foreground="{DynamicResource BrushOnSurface}" Margin="0,0,0,6" />
+        <TextBox x:Name="InputBox" FontSize="12" Padding="4,3" Margin="0,0,0,12"
+                 TextChanged="OnTextChanged" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="OkButton" Content="OK" IsDefault="True" Width="72" Margin="0,0,8,0"
+                    Click="OnOk" IsEnabled="False" />
+            <Button Content="Cancel" IsCancel="True" Width="72" />
+        </StackPanel>
+    </StackPanel>
+</Window>

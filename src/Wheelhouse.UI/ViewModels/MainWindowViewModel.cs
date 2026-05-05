@@ -21,6 +21,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty] private string _title = "Wheelhouse";
     [ObservableProperty] private string _statusText = "Ready";
+    [ObservableProperty] private bool _isBusy = false;
     [ObservableProperty] private bool _isTerminalVisible = false;
     [ObservableProperty] private AppTheme _currentTheme;
 
@@ -69,10 +70,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
         if (dialog.ShowDialog() != true) return;
 
+        IsBusy = true;
+        StatusText = "Opening repository...";
         try
         {
-            StatusText = "Opening repository...";
-            _repositoryService.Open(dialog.FolderName);
+            await Task.Run(() => _repositoryService.Open(dialog.FolderName));
 
             var repoInfo = _repositoryService.CurrentRepository!;
             Title = $"{repoInfo.Name} — Wheelhouse";
@@ -94,12 +96,17 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             MessageBox.Show($"Could not open repository:\n{ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
     private async Task FetchAsync()
     {
         if (!_repositoryService.IsOpen) return;
+        IsBusy = true;
         StatusText = "Fetching...";
         try
         {
@@ -111,12 +118,17 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         {
             StatusText = $"Fetch failed: {ex.Message}";
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
     private async Task PullAsync()
     {
         if (!_repositoryService.IsOpen) return;
+        IsBusy = true;
         StatusText = "Pulling...";
         try
         {
@@ -128,12 +140,17 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         {
             StatusText = $"Pull failed: {ex.Message}";
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
     private async Task PushAsync()
     {
         if (!_repositoryService.IsOpen) return;
+        IsBusy = true;
         StatusText = "Pushing...";
         try
         {
@@ -144,5 +161,21 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         {
             StatusText = $"Push failed: {ex.Message}";
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
+
+    [RelayCommand]
+    private void CreateBranch() => SidebarViewModel.CreateBranchCommand.Execute(null);
+
+    [RelayCommand]
+    private void StashChanges() => SidebarViewModel.StashChangesCommand.Execute(null);
+
+    [RelayCommand]
+    private void CreateTag() => SidebarViewModel.CreateTagCommand.Execute(null);
+
+    [RelayCommand]
+    private void AddRemote() => SidebarViewModel.AddRemoteCommand.Execute(null);
 }

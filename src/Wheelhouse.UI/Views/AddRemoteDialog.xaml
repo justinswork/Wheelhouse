@@ -1,0 +1,22 @@
+<Window x:Class="Wheelhouse.UI.Views.AddRemoteDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add Remote" Height="180" Width="440"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BrushBackground}"
+        ShowInTaskbar="False">
+    <StackPanel Margin="12">
+        <TextBlock Text="Name:" FontSize="12" Foreground="{DynamicResource BrushOnSurface}" Margin="0,0,0,4" />
+        <TextBox x:Name="NameBox" FontSize="12" Padding="4,3" Margin="0,0,0,8"
+                 TextChanged="OnFieldChanged" />
+        <TextBlock Text="URL:" FontSize="12" Foreground="{DynamicResource BrushOnSurface}" Margin="0,0,0,4" />
+        <TextBox x:Name="UrlBox" FontSize="12" Padding="4,3" Margin="0,0,0,12"
+                 TextChanged="OnFieldChanged" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="AddButton" Content="Add" IsDefault="True" Width="72" Margin="0,0,8,0"
+                    Click="OnAdd" IsEnabled="False" />
+            <Button Content="Cancel" IsCancel="True" Width="72" />
+        </StackPanel>
+    </StackPanel>
+</Window>

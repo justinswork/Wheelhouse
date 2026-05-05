@@ -40,7 +40,9 @@
                 BorderBrush="{DynamicResource BrushBorderSubtle}"
                 Padding="8,6" />
 
-        <!-- Commit list -->
+        <!-- Commit list
+             Tag on each ListViewItem is set to the LogViewModel so that ContextMenu commands
+             can bind to it via PlacementTarget.Tag while CommandParameter binds to the item VM. -->
         <ListView x:Name="CommitList"
                   ItemsSource="{Binding Commits}"
                   SelectedItem="{Binding SelectedCommit}"
@@ -54,6 +56,29 @@
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                     <Setter Property="Padding" Value="0" />
                     <Setter Property="Height" Value="24" />
+                    <Setter Property="Tag" Value="{Binding ElementName=CommitList, Path=DataContext}" />
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem Header="Cherry-pick"
+                                          Command="{Binding PlacementTarget.Tag.CherryPickCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                          CommandParameter="{Binding PlacementTarget.DataContext,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                <MenuItem Header="Revert Commit..."
+                                          Command="{Binding PlacementTarget.Tag.RevertCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                          CommandParameter="{Binding PlacementTarget.DataContext,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                <Separator />
+                                <MenuItem Header="Reset to Here..."
+                                          Command="{Binding PlacementTarget.Tag.ResetToHereCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                          CommandParameter="{Binding PlacementTarget.DataContext,
+                                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
             </ListView.ItemContainerStyle>
             <ListView.View>
