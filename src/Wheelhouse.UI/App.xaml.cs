@@ -6,6 +6,7 @@ using Wheelhouse.Core.Services;
 using Wheelhouse.Hosting.Abstractions;
 using Wheelhouse.Hosting.AzureDevOps;
 using Wheelhouse.Hosting.GitHub;
+using Wheelhouse.Terminal;
 using Wheelhouse.UI.Services;
 using Wheelhouse.UI.ViewModels;
 
@@ -39,6 +40,9 @@ public partial class App : Application
         services.AddSingleton<IHostingProvider, AzureDevOpsHostingProvider>();
         services.AddSingleton<IHostingService, HostingService>();
 
+        // Terminal
+        services.AddSingleton<ITerminalService, TerminalService>();
+
         // ViewModels
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<WorkingTreeViewModel>();
@@ -47,6 +51,7 @@ public partial class App : Application
         services.AddSingleton<RepositorySidebarViewModel>();
         services.AddSingleton<ReflogViewModel>();
         services.AddSingleton<PullRequestsViewModel>();
+        services.AddSingleton<TerminalPaneViewModel>();
 
         // Windows
         services.AddSingleton<MainWindow>();

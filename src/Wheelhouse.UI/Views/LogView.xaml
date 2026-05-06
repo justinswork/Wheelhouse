@@ -22,10 +22,19 @@
                            VerticalAlignment="Center" />
                 <Button DockPanel.Dock="Right" Content="Refresh"
                         Command="{Binding LoadCommand}"
-                        Padding="6,2" FontSize="11"
+                        Padding="6,2" FontSize="11" Margin="8,0,0,0"
                         Background="Transparent"
                         Foreground="{DynamicResource BrushOnSurfaceMuted}"
                         BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}" />
+                <TextBox DockPanel.Dock="Right" Width="200"
+                         Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                         FontSize="12" Padding="4,2"
+                         VerticalContentAlignment="Center"
+                         BorderBrush="{DynamicResource BrushBorder}"
+                         Foreground="{DynamicResource BrushOnSurface}" />
+                <TextBlock Text="Filter:" FontSize="11" DockPanel.Dock="Right" Margin="16,0,4,0"
+                           Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                           VerticalAlignment="Center" />
             </DockPanel>
         </Border>
 
@@ -44,7 +53,7 @@
              Tag on each ListViewItem is set to the LogViewModel so that ContextMenu commands
              can bind to it via PlacementTarget.Tag while CommandParameter binds to the item VM. -->
         <ListView x:Name="CommitList"
-                  ItemsSource="{Binding Commits}"
+                  ItemsSource="{Binding FilteredCommits}"
                   SelectedItem="{Binding SelectedCommit}"
                   Background="{DynamicResource BrushSurface}"
                   BorderThickness="0"
@@ -130,6 +139,17 @@
                                            FontSize="11"
                                            Foreground="{DynamicResource BrushOnSurfaceMuted}"
                                            VerticalAlignment="Center" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="CI" Width="28">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:CommitItemViewModel}">
+                                <TextBlock Text="{Binding CiStatus}"
+                                           FontSize="13"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           ToolTip="{Binding CiStatus}" />
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>

@@ -24,9 +24,11 @@ public sealed partial class LogViewModel : ViewModelBase,
     private const int CiStatusBatchSize = 10;
 
     [ObservableProperty] private ObservableCollection<CommitItemViewModel> _commits = [];
+    [ObservableProperty] private ObservableCollection<CommitItemViewModel> _filteredCommits = [];
     [ObservableProperty] private CommitItemViewModel? _selectedCommit;
     [ObservableProperty] private bool _isLoading = false;
     [ObservableProperty] private bool _hasMore = false;
+    [ObservableProperty] private string _filterText = "";
 
     public LogViewModel(IRepositoryService repositoryService, IHostingService hostingService)
     {
@@ -53,6 +55,22 @@ public sealed partial class LogViewModel : ViewModelBase,
     {
         if (value is null) return;
         WeakReferenceMessenger.Default.Send(new CommitSelectedMessage(value.Commit));
+    }
+
+    partial void OnFilterTextChanged(string value) => ApplyFilter();
+    partial void OnCommitsChanged(ObservableCollection<CommitItemViewModel> value) => ApplyFilter();
+
+    private void ApplyFilter()
+    {
+        var filter = FilterText?.Trim() ?? "";
+        var source = filter.Length == 0
+            ? Commits
+            : new ObservableCollection<CommitItemViewModel>(
+                Commits.Where(c =>
+                    c.MessageShort.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    c.AuthorName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    c.ShortSha.Contains(filter, StringComparison.OrdinalIgnoreCase)));
+        FilteredCommits = source;
     }
 
     [RelayCommand]

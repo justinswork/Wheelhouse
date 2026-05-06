@@ -193,15 +193,9 @@
                           Visibility="{Binding IsTerminalVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <!-- Terminal pane -->
-            <Border Grid.Row="2"
-                    Background="#0D1117"
-                    Visibility="{Binding IsTerminalVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="Terminal (Phase 5)"
-                           Foreground="#7D8590"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           FontFamily="{StaticResource FontMono}" />
-            </Border>
+            <views:TerminalPaneView Grid.Row="2"
+                    DataContext="{Binding TerminalPaneViewModel}"
+                    Visibility="{Binding IsTerminalVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
         </Grid>
 
     </DockPanel>

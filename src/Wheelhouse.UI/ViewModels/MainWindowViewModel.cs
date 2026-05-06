@@ -24,6 +24,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     private readonly ReflogViewModel _reflogViewModel;
     private readonly PullRequestsViewModel _pullRequestsViewModel;
 
+    public TerminalPaneViewModel TerminalPaneViewModel { get; }
+
     // Panels rendered outside the tab system
     public DiffViewModel DiffViewModel { get; }
     public RepositorySidebarViewModel SidebarViewModel { get; }
@@ -51,7 +53,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         DiffViewModel diffViewModel,
         RepositorySidebarViewModel sidebarViewModel,
         ReflogViewModel reflogViewModel,
-        PullRequestsViewModel pullRequestsViewModel)
+        PullRequestsViewModel pullRequestsViewModel,
+        TerminalPaneViewModel terminalPaneViewModel)
     {
         _repositoryService = repositoryService;
         _settingsService = settingsService;
@@ -59,6 +62,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         _hostingService = hostingService;
         _reflogViewModel = reflogViewModel;
         _pullRequestsViewModel = pullRequestsViewModel;
+        TerminalPaneViewModel = terminalPaneViewModel;
 
         DiffViewModel = diffViewModel;
         SidebarViewModel = sidebarViewModel;
