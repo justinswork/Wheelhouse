@@ -91,21 +91,23 @@ internal sealed class ConPtyTerminalSession : ITerminalSession
             Marshal.FreeHGlobal(attrList);
         }
 
-        _inputStream  = new FileStream(new SafeFileHandle(inputWrite,  ownsHandle: true), FileAccess.Write, 4096, isAsync: true);
-        _outputStream = new FileStream(new SafeFileHandle(outputRead, ownsHandle: true),  FileAccess.Read,  4096, isAsync: true);
+        // Anonymous pipe handles are not opened for overlapped I/O — isAsync must be false.
+        // Reads/writes happen on background Task.Run threads, so synchronous I/O is fine.
+        _inputStream  = new FileStream(new SafeFileHandle(inputWrite,  ownsHandle: true), FileAccess.Write, 4096, isAsync: false);
+        _outputStream = new FileStream(new SafeFileHandle(outputRead, ownsHandle: true),  FileAccess.Read,  4096, isAsync: false);
 
-        Task.Run(() => ReadOutputLoopAsync(_cts.Token));
+        Task.Run(() => ReadOutputLoop(_cts.Token));
         Task.Run(() => MonitorExitAsync(_cts.Token));
     }
 
-    private async Task ReadOutputLoopAsync(CancellationToken ct)
+    private void ReadOutputLoop(CancellationToken ct)
     {
         var buffer = new byte[4096];
         try
         {
             while (!ct.IsCancellationRequested)
             {
-                int read = await _outputStream!.ReadAsync(buffer, ct).ConfigureAwait(false);
+                int read = _outputStream!.Read(buffer, 0, buffer.Length);
                 if (read == 0) break;
                 OutputReceived?.Invoke(this, Encoding.UTF8.GetString(buffer, 0, read));
             }
@@ -126,16 +128,19 @@ internal sealed class ConPtyTerminalSession : ITerminalSession
         catch (OperationCanceledException) { }
     }
 
-    public async Task WriteInputAsync(string input, CancellationToken ct = default)
+    public Task WriteInputAsync(string input, CancellationToken ct = default)
     {
-        if (_inputStream is null || _disposed) return;
-        try
+        if (_inputStream is null || _disposed) return Task.CompletedTask;
+        return Task.Run(() =>
         {
-            var bytes = Encoding.UTF8.GetBytes(input);
-            await _inputStream.WriteAsync(bytes, ct).ConfigureAwait(false);
-            await _inputStream.FlushAsync(ct).ConfigureAwait(false);
-        }
-        catch (Exception ex) { _logger.LogDebug(ex, "Write to terminal {Id} failed", Id); }
+            try
+            {
+                var bytes = Encoding.UTF8.GetBytes(input);
+                _inputStream.Write(bytes);
+                _inputStream.Flush();
+            }
+            catch (Exception ex) { _logger.LogDebug(ex, "Write to terminal {Id} failed", Id); }
+        }, ct);
     }
 
     public Task ResizeAsync(int columns, int rows, CancellationToken ct = default)
@@ -151,9 +156,11 @@ internal sealed class ConPtyTerminalSession : ITerminalSession
         _disposed = true;
         await _cts.CancelAsync();
         _cts.Dispose();
-        if (_inputStream is not null)  await _inputStream.DisposeAsync();
-        if (_outputStream is not null) await _outputStream.DisposeAsync();
-        if (_hPC      != IntPtr.Zero) { ClosePseudoConsole(_hPC); _hPC = IntPtr.Zero; }
-        if (_hProcess != IntPtr.Zero) { CloseHandle(_hProcess);   _hProcess = IntPtr.Zero; }
+        // Close the pseudoconsole first — this signals EOF to the output pipe,
+        // which unblocks the synchronous Read() in ReadOutputLoop.
+        if (_hPC != IntPtr.Zero) { ClosePseudoConsole(_hPC); _hPC = IntPtr.Zero; }
+        _inputStream?.Dispose();
+        _outputStream?.Dispose();
+        if (_hProcess != IntPtr.Zero) { CloseHandle(_hProcess); _hProcess = IntPtr.Zero; }
     }
 }
