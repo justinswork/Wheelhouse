@@ -39,18 +39,13 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
         CurrentRepository = null;
     }
 
-    public async Task<WorkingTreeStatus> GetWorkingTreeStatusAsync(CancellationToken ct = default)
+    public Task<WorkingTreeStatus> GetWorkingTreeStatusAsync(CancellationToken ct = default)
     {
         EnsureOpen();
-        try
-        {
-            return await Lib(() => GetStatusViaLibGit2(), ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "libgit2 status failed, falling back to git.exe");
-            return await GitCli.GetStatusAsync(CurrentRepository!.Path, ct);
-        }
+        // Always use git.exe — libgit2's RetrieveStatus rewrites .git/index (stat-cache
+        // refresh) on every call, which triggers the FileSystemWatcher and creates an
+        // infinite refresh loop.
+        return GitCli.GetStatusAsync(CurrentRepository!.Path, ct);
     }
 
     public Task<IReadOnlyList<BranchInfo>> GetBranchesAsync(CancellationToken ct = default)
@@ -120,76 +115,36 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
         }, ct);
     }
 
-    public async Task<FileDiff?> GetFileDiffAsync(string filePath, bool staged, CancellationToken ct = default)
+    public Task<FileDiff?> GetFileDiffAsync(string filePath, bool staged, CancellationToken ct = default)
     {
         EnsureOpen();
-        IReadOnlyList<FileDiff>? mapped = null;
-        try
-        {
-            mapped = await Lib(() =>
-            {
-                var diff = staged
-                    ? _repo!.Diff.Compare<Patch>(_repo.Head.Tip?.Tree, DiffTargets.Index)
-                    : _repo!.Diff.Compare<Patch>(_repo.Head.Tip?.Tree, DiffTargets.WorkingDirectory);
-                return MapPatch(diff);
-            }, ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "libgit2 diff failed for {Path}, falling back to git.exe", filePath);
-            return await GitCli.GetFileDiffAsync(CurrentRepository!.Path, filePath, staged, ct);
-        }
-
-        var result = mapped.FirstOrDefault(f => f.NewPath == filePath || f.OldPath == filePath);
-        if (result is null && !staged)
-            return await GitCli.GetFileDiffAsync(CurrentRepository!.Path, filePath, staged: false, ct);
-        return result;
+        // Always use git.exe — the libgit2 path compared the ENTIRE working tree to find
+        // one file's diff, which was slow and held the _gate, blocking concurrent status reads.
+        return GitCli.GetFileDiffAsync(CurrentRepository!.Path, filePath, staged, ct);
     }
 
-    public async Task StageAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
+    public Task StageAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
     {
         EnsureOpen();
-        var paths = filePaths.ToList();
-        try { await Lib(() => Commands.Stage(_repo!, paths), ct); }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "libgit2 stage failed, falling back to git.exe");
-            await GitCli.StageAsync(CurrentRepository!.Path, paths, ct);
-        }
+        return GitCli.StageAsync(CurrentRepository!.Path, filePaths, ct);
     }
 
-    public async Task UnstageAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
+    public Task UnstageAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
     {
         EnsureOpen();
-        var paths = filePaths.ToList();
-        try { await Lib(() => Commands.Unstage(_repo!, paths), ct); }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "libgit2 unstage failed, falling back to git.exe");
-            await GitCli.UnstageAsync(CurrentRepository!.Path, paths, ct);
-        }
+        return GitCli.UnstageAsync(CurrentRepository!.Path, filePaths, ct);
     }
 
-    public async Task StageAllAsync(CancellationToken ct = default)
+    public Task StageAllAsync(CancellationToken ct = default)
     {
         EnsureOpen();
-        try { await Lib(() => Commands.Stage(_repo!, "*"), ct); }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "libgit2 stage-all failed, falling back to git.exe");
-            await GitCli.StageAllAsync(CurrentRepository!.Path, ct);
-        }
+        return GitCli.StageAllAsync(CurrentRepository!.Path, ct);
     }
 
-    public async Task UnstageAllAsync(CancellationToken ct = default)
+    public Task UnstageAllAsync(CancellationToken ct = default)
     {
         EnsureOpen();
-        try { await Lib(() => Commands.Unstage(_repo!, "*"), ct); }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "libgit2 unstage-all failed, falling back to git.exe");
-            await GitCli.UnstageAllAsync(CurrentRepository!.Path, ct);
-        }
+        return GitCli.UnstageAllAsync(CurrentRepository!.Path, ct);
     }
 
     public Task StageHunkAsync(string filePath, DiffHunk hunk, bool isNew, CancellationToken ct = default)

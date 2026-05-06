@@ -64,6 +64,9 @@ public sealed class RepositoryWatcher : IDisposable,
         if (IsObjectStore(e.FullPath)) return;
         // Skip lock files — these are transient and always paired with the real change
         if (e.FullPath.EndsWith(".lock", StringComparison.OrdinalIgnoreCase)) return;
+        // Skip the index file itself — git and libgit2 both rewrite it during stat-cache
+        // refreshes (every status read), which would cause an infinite refresh loop.
+        if (string.Equals(Path.GetFileName(e.FullPath), "index", StringComparison.OrdinalIgnoreCase)) return;
 
         _debounce?.Change(400, Timeout.Infinite);
     }
@@ -71,6 +74,7 @@ public sealed class RepositoryWatcher : IDisposable,
     private void OnGitDirRenamed(object sender, RenamedEventArgs e)
     {
         if (IsObjectStore(e.FullPath)) return;
+        if (string.Equals(Path.GetFileName(e.FullPath), "index", StringComparison.OrdinalIgnoreCase)) return;
         _debounce?.Change(400, Timeout.Infinite);
     }
 

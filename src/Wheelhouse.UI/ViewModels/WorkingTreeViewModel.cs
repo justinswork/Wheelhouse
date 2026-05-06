@@ -101,32 +101,38 @@ public sealed partial class WorkingTreeViewModel : ViewModelBase,
     private async Task StageFileAsync(FileStatusItemViewModel? item)
     {
         if (item is null || !_repositoryService.IsOpen) return;
-        await _repositoryService.StageAsync([item.FilePath]);
-        await RefreshAsync();
+        try { await _repositoryService.StageAsync([item.FilePath]); await RefreshAsync(); }
+        catch (Exception ex) { ShowError(ex); }
     }
 
     [RelayCommand]
     private async Task UnstageFileAsync(FileStatusItemViewModel? item)
     {
         if (item is null || !_repositoryService.IsOpen) return;
-        await _repositoryService.UnstageAsync([item.FilePath]);
-        await RefreshAsync();
+        try { await _repositoryService.UnstageAsync([item.FilePath]); await RefreshAsync(); }
+        catch (Exception ex) { ShowError(ex); }
     }
 
     [RelayCommand]
     private async Task StageAllAsync()
     {
         if (!_repositoryService.IsOpen) return;
-        await _repositoryService.StageAllAsync();
-        await RefreshAsync();
+        try { await _repositoryService.StageAllAsync(); await RefreshAsync(); }
+        catch (Exception ex) { ShowError(ex); }
     }
 
     [RelayCommand]
     private async Task UnstageAllAsync()
     {
         if (!_repositoryService.IsOpen) return;
-        await _repositoryService.UnstageAllAsync();
-        await RefreshAsync();
+        try { await _repositoryService.UnstageAllAsync(); await RefreshAsync(); }
+        catch (Exception ex) { ShowError(ex); }
+    }
+
+    private void ShowError(Exception ex)
+    {
+        ErrorMessage = ex.Message;
+        OnPropertyChanged(nameof(HasError));
     }
 
     [RelayCommand(CanExecute = nameof(CanCommit))]

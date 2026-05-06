@@ -18,6 +18,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
     private readonly IRepositoryService _repositoryService;
     private string _currentFilePath = string.Empty;
     private bool _currentIsStaged;
+    private CancellationTokenSource _loadCts = new();
 
     [ObservableProperty] private ObservableCollection<HunkViewModel> _hunks = [];
     [ObservableProperty] private string _diffHeader = string.Empty;
@@ -77,12 +78,18 @@ public sealed partial class DiffViewModel : ViewModelBase,
 
     private async Task LoadDiffAsync(string filePath, bool isStaged)
     {
+        // Cancel any in-flight load so only the latest request completes.
+        var cts = new CancellationTokenSource();
+        Interlocked.Exchange(ref _loadCts, cts).Cancel();
+
         if (!_repositoryService.IsOpen) return;
         IsLoading = true;
         IsEmpty = false;
         try
         {
-            var diff = await _repositoryService.GetFileDiffAsync(filePath, isStaged);
+            var diff = await _repositoryService.GetFileDiffAsync(filePath, isStaged, cts.Token);
+            if (cts.IsCancellationRequested) return;
+
             if (diff is null)
             {
                 Application.Current.Dispatcher.Invoke(() =>
@@ -109,6 +116,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
                 IsEmpty = hunks.Count == 0 && !diff.IsBinary;
             });
         }
+        catch (OperationCanceledException) { return; }
         catch (Exception ex)
         {
             Application.Current.Dispatcher.Invoke(() =>
@@ -120,7 +128,8 @@ public sealed partial class DiffViewModel : ViewModelBase,
         }
         finally
         {
-            IsLoading = false;
+            if (!cts.IsCancellationRequested)
+                IsLoading = false;
         }
     }
 
