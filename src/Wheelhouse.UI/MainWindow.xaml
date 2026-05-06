@@ -114,6 +114,16 @@
                 <TextBlock Text="{Binding StatusText}"
                            Foreground="{DynamicResource BrushOnStatusBar}" />
             </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right" HorizontalContentAlignment="Right"
+                           Visibility="{Binding UpdateAvailableText,
+                               Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                <TextBlock Text="{Binding UpdateAvailableText}"
+                           Foreground="#58a6ff"
+                           FontWeight="SemiBold"
+                           Cursor="Hand"
+                           ToolTip="Visit Releases page to download the update"
+                           MouseLeftButtonUp="OnUpdateBannerClick" />
+            </StatusBarItem>
         </StatusBar>
 
         <!-- Main layout -->

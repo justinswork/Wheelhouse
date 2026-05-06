@@ -53,6 +53,10 @@ public partial class App : Application
         services.AddSingleton<PullRequestsViewModel>();
         services.AddSingleton<TerminalPaneViewModel>();
 
+        // Services
+        services.AddSingleton<RepositoryWatcher>();
+        services.AddSingleton<UpdateCheckService>();
+
         // Windows
         services.AddSingleton<MainWindow>();
     }
@@ -64,8 +68,14 @@ public partial class App : Application
         var themeService = _host.Services.GetRequiredService<IThemeService>();
         themeService.Initialize();
 
+        // Eagerly instantiate so it begins listening for RepositoryOpenedMessage
+        _ = _host.Services.GetRequiredService<RepositoryWatcher>();
+
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         mainWindow.Show();
+
+        // Fire-and-forget update check — runs after window is shown
+        _ = _host.Services.GetRequiredService<UpdateCheckService>().CheckAsync();
 
         base.OnStartup(e);
     }

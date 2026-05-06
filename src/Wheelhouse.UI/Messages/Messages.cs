@@ -63,3 +63,9 @@ public sealed class CommitSelectedMessage
 public sealed class OpenPullRequestsMessage { }
 
 public sealed class PullRequestsChangedMessage { }
+
+public sealed class UpdateAvailableMessage
+{
+    public string Version { get; }
+    public UpdateAvailableMessage(string version) => Version = version;
+}

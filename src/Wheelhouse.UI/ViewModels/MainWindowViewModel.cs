@@ -15,7 +15,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     IRecipient<OpenFileHistoryMessage>,
     IRecipient<OpenBlameMessage>,
     IRecipient<NavigateToCommitMessage>,
-    IRecipient<OpenPullRequestsMessage>
+    IRecipient<OpenPullRequestsMessage>,
+    IRecipient<UpdateAvailableMessage>
 {
     private readonly IRepositoryService _repositoryService;
     private readonly ISettingsService _settingsService;
@@ -42,6 +43,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     [ObservableProperty] private bool _isBusy = false;
     [ObservableProperty] private bool _isTerminalVisible = false;
     [ObservableProperty] private AppTheme _currentTheme;
+    [ObservableProperty] private string? _updateAvailableText;
 
     public MainWindowViewModel(
         IRepositoryService repositoryService,
@@ -80,6 +82,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         WeakReferenceMessenger.Default.Register<OpenBlameMessage>(this);
         WeakReferenceMessenger.Default.Register<NavigateToCommitMessage>(this);
         WeakReferenceMessenger.Default.Register<OpenPullRequestsMessage>(this);
+        WeakReferenceMessenger.Default.Register<UpdateAvailableMessage>(this);
     }
 
     void IRecipient<OpenReflogMessage>.Receive(OpenReflogMessage _)
@@ -146,6 +149,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
             ActiveTab = existing;
         });
     }
+
+    void IRecipient<UpdateAvailableMessage>.Receive(UpdateAvailableMessage msg) =>
+        Application.Current.Dispatcher.Invoke(() =>
+            UpdateAvailableText = $"Update available: v{msg.Version}");
 
     private void RemoveTab(TabDefinition tab) =>
         Application.Current.Dispatcher.Invoke(() => Tabs.Remove(tab));
