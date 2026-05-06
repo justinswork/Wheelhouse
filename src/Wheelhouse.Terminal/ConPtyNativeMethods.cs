@@ -6,6 +6,7 @@ internal static class ConPtyNativeMethods
 {
     internal const uint PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE = 0x00020016;
     internal const uint EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
+    internal const uint CREATE_NO_WINDOW            = 0x08000000;
     internal const int  S_OK = 0;
     internal const uint STILL_ACTIVE = 259;
 

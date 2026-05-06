@@ -46,55 +46,72 @@ internal sealed class ConPtyTerminalSession : ITerminalSession
         var size = new COORD { X = cols, Y = rows };
 
         CreatePipe(out var outputRead, out var outputWrite, IntPtr.Zero, 0);
-        CreatePipe(out var inputRead, out var inputWrite, IntPtr.Zero, 0);
+        CreatePipe(out var inputRead,  out var inputWrite,  IntPtr.Zero, 0);
 
         int hr = CreatePseudoConsole(size, inputRead, outputWrite, 0, out _hPC);
         CloseHandle(outputWrite);
         CloseHandle(inputRead);
 
         if (hr != S_OK)
+        {
+            CloseHandle(outputRead);
+            CloseHandle(inputWrite);
             throw new InvalidOperationException($"CreatePseudoConsole failed: 0x{hr:X8}");
+        }
 
-        IntPtr attrListSize = IntPtr.Zero;
-        InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref attrListSize);
-        var attrList = Marshal.AllocHGlobal(attrListSize);
         try
         {
-            if (!InitializeProcThreadAttributeList(attrList, 1, 0, ref attrListSize))
-                throw new InvalidOperationException($"InitializeProcThreadAttributeList failed: {Marshal.GetLastWin32Error()}");
+            IntPtr attrListSize = IntPtr.Zero;
+            InitializeProcThreadAttributeList(IntPtr.Zero, 1, 0, ref attrListSize);
+            var attrList = Marshal.AllocHGlobal(attrListSize);
+            try
+            {
+                if (!InitializeProcThreadAttributeList(attrList, 1, 0, ref attrListSize))
+                    throw new InvalidOperationException($"InitializeProcThreadAttributeList failed: {Marshal.GetLastWin32Error()}");
 
-            var hpc = _hPC;
-            if (!UpdateProcThreadAttribute(attrList, 0,
-                    (IntPtr)PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
-                    ref hpc, (IntPtr)IntPtr.Size, IntPtr.Zero, IntPtr.Zero))
-                throw new InvalidOperationException($"UpdateProcThreadAttribute failed: {Marshal.GetLastWin32Error()}");
+                var hpc = _hPC;
+                if (!UpdateProcThreadAttribute(attrList, 0,
+                        (IntPtr)PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
+                        ref hpc, (IntPtr)IntPtr.Size, IntPtr.Zero, IntPtr.Zero))
+                    throw new InvalidOperationException($"UpdateProcThreadAttribute failed: {Marshal.GetLastWin32Error()}");
 
-            var si = new STARTUPINFOEX();
-            si.StartupInfo.cb = Marshal.SizeOf<STARTUPINFOEX>();
-            si.lpAttributeList = attrList;
+                var si = new STARTUPINFOEX();
+                si.StartupInfo.cb = Marshal.SizeOf<STARTUPINFOEX>();
+                si.lpAttributeList = attrList;
 
-            var commandLine = string.IsNullOrEmpty(Shell.Arguments)
-                ? $"\"{Shell.ExecutablePath}\""
-                : $"\"{Shell.ExecutablePath}\" {Shell.Arguments}";
+                var commandLine = string.IsNullOrEmpty(Shell.Arguments)
+                    ? $"\"{Shell.ExecutablePath}\""
+                    : $"\"{Shell.ExecutablePath}\" {Shell.Arguments}";
 
-            if (!CreateProcess(null, commandLine, IntPtr.Zero, IntPtr.Zero, false,
-                    EXTENDED_STARTUPINFO_PRESENT, IntPtr.Zero, WorkingDirectory,
-                    ref si, out var pi))
-                throw new InvalidOperationException($"CreateProcess failed: {Marshal.GetLastWin32Error()}");
+                if (!CreateProcess(null, commandLine, IntPtr.Zero, IntPtr.Zero, false,
+                        EXTENDED_STARTUPINFO_PRESENT | CREATE_NO_WINDOW, IntPtr.Zero, WorkingDirectory,
+                        ref si, out var pi))
+                    throw new InvalidOperationException($"CreateProcess failed: {Marshal.GetLastWin32Error()}");
 
-            _hProcess = pi.hProcess;
-            CloseHandle(pi.hThread);
+                _hProcess = pi.hProcess;
+                CloseHandle(pi.hThread);
+            }
+            finally
+            {
+                DeleteProcThreadAttributeList(attrList);
+                Marshal.FreeHGlobal(attrList);
+            }
+
+            // Anonymous pipe handles are not opened for overlapped I/O — isAsync must be false.
+            // Reads/writes happen on background Task.Run threads, so synchronous I/O is fine.
+            _inputStream  = new FileStream(new SafeFileHandle(inputWrite,  ownsHandle: true), FileAccess.Write, 4096, isAsync: false);
+            _outputStream = new FileStream(new SafeFileHandle(outputRead, ownsHandle: true),  FileAccess.Read,  4096, isAsync: false);
         }
-        finally
+        catch
         {
-            DeleteProcThreadAttributeList(attrList);
-            Marshal.FreeHGlobal(attrList);
+            // Clean up anything that was allocated before the failure so no process or
+            // pseudo-console is left running in the background with no owner.
+            if (_hPC != IntPtr.Zero) { ClosePseudoConsole(_hPC); _hPC = IntPtr.Zero; }
+            if (_hProcess != IntPtr.Zero) { CloseHandle(_hProcess); _hProcess = IntPtr.Zero; }
+            CloseHandle(outputRead);
+            CloseHandle(inputWrite);
+            throw;
         }
-
-        // Anonymous pipe handles are not opened for overlapped I/O — isAsync must be false.
-        // Reads/writes happen on background Task.Run threads, so synchronous I/O is fine.
-        _inputStream  = new FileStream(new SafeFileHandle(inputWrite,  ownsHandle: true), FileAccess.Write, 4096, isAsync: false);
-        _outputStream = new FileStream(new SafeFileHandle(outputRead, ownsHandle: true),  FileAccess.Read,  4096, isAsync: false);
 
         Task.Run(() => ReadOutputLoop(_cts.Token));
         Task.Run(() => MonitorExitAsync(_cts.Token));
