@@ -9,4 +9,6 @@ public sealed class AppSettings
     public bool ShowTerminalOnStartup { get; set; } = false;
     public string FontFamily { get; set; } = "Cascadia Code";
     public double FontSize { get; set; } = 13;
+    public bool DiffSideBySide { get; set; } = false;
+    public bool DiffWordWrap { get; set; } = false;
 }

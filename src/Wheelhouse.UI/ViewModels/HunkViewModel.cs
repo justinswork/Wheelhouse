@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Wheelhouse.Core.Models;
@@ -20,12 +21,16 @@ public sealed partial class HunkViewModel : ViewModelBase
 
     public string Header => _hunk.Header;
     public IReadOnlyList<DiffLineViewModel> Lines { get; }
+    public IReadOnlyList<SideBySideLine> SideBySideLines { get; }
+
+    [ObservableProperty] private bool _isSideBySide;
+    [ObservableProperty] private bool _isWordWrap;
 
     public bool CanStage   => !_isStaged && !_isReadOnly;
     public bool CanUnstage => _isStaged && !_isReadOnly;
     public bool CanDiscard => !_isStaged && !_isReadOnly;
 
-    public HunkViewModel(DiffHunk hunk, string filePath, bool isStaged, bool isNew, bool isDeleted, IRepositoryService service, bool isReadOnly = false)
+    public HunkViewModel(DiffHunk hunk, string filePath, bool isStaged, bool isNew, bool isDeleted, IRepositoryService service, bool isReadOnly = false, bool isSideBySide = false, bool isWordWrap = false)
     {
         _hunk = hunk;
         _filePath = filePath;
@@ -34,7 +39,48 @@ public sealed partial class HunkViewModel : ViewModelBase
         _isDeleted = isDeleted;
         _service = service;
         _isReadOnly = isReadOnly;
+        _isSideBySide = isSideBySide;
+        _isWordWrap = isWordWrap;
         Lines = hunk.Lines.Select(l => new DiffLineViewModel(l)).ToList();
+        SideBySideLines = BuildSideBySide(Lines);
+    }
+
+    private static IReadOnlyList<SideBySideLine> BuildSideBySide(IReadOnlyList<DiffLineViewModel> lines)
+    {
+        var result = new List<SideBySideLine>();
+        var removed = new List<DiffLineViewModel>();
+        var added   = new List<DiffLineViewModel>();
+
+        void Flush()
+        {
+            int count = Math.Max(removed.Count, added.Count);
+            for (int i = 0; i < count; i++)
+                result.Add(new SideBySideLine(
+                    i < removed.Count ? removed[i] : null,
+                    i < added.Count   ? added[i]   : null));
+            removed.Clear();
+            added.Clear();
+        }
+
+        foreach (var line in lines)
+        {
+            switch (line.Type)
+            {
+                case DiffLineType.Removed:
+                    if (added.Count > 0) Flush();
+                    removed.Add(line);
+                    break;
+                case DiffLineType.Added:
+                    added.Add(line);
+                    break;
+                default:
+                    Flush();
+                    result.Add(new SideBySideLine(line, line));
+                    break;
+            }
+        }
+        Flush();
+        return result;
     }
 
     [RelayCommand]
@@ -80,6 +126,33 @@ public sealed partial class HunkViewModel : ViewModelBase
         {
             MessageBox.Show($"Discard hunk failed: {ex.Message}", "Discard Hunk", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+}
+
+public sealed class SideBySideLine
+{
+    private static readonly Brush AddedBrush   = new SolidColorBrush(Color.FromArgb(60, 0x1A, 0x7F, 0x37));
+    private static readonly Brush RemovedBrush = new SolidColorBrush(Color.FromArgb(60, 0xCF, 0x22, 0x2E));
+
+    public string OldLineNo    { get; }
+    public string NewLineNo    { get; }
+    public string OldContent   { get; }
+    public string NewContent   { get; }
+    public string OldPrefix    { get; }
+    public string NewPrefix    { get; }
+    public Brush  OldBackground { get; }
+    public Brush  NewBackground { get; }
+
+    public SideBySideLine(DiffLineViewModel? oldLine, DiffLineViewModel? newLine)
+    {
+        OldLineNo     = oldLine?.OldLineNo  ?? string.Empty;
+        NewLineNo     = newLine?.NewLineNo  ?? string.Empty;
+        OldContent    = oldLine?.Content    ?? string.Empty;
+        NewContent    = newLine?.Content    ?? string.Empty;
+        OldPrefix     = oldLine is null ? string.Empty : oldLine.Type == DiffLineType.Removed ? "-" : " ";
+        NewPrefix     = newLine is null ? string.Empty : newLine.Type == DiffLineType.Added   ? "+" : " ";
+        OldBackground = oldLine?.Type == DiffLineType.Removed ? RemovedBrush : Brushes.Transparent;
+        NewBackground = newLine?.Type == DiffLineType.Added   ? AddedBrush   : Brushes.Transparent;
     }
 }
 

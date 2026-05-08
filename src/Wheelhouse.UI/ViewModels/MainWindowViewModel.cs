@@ -170,6 +170,13 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         }
     }
 
+    internal async Task RestoreLastRepositoryAsync()
+    {
+        var path = _settingsService.Current.RecentRepositories.FirstOrDefault();
+        if (path is null || !System.IO.Directory.Exists(path)) return;
+        await OpenRepositoryPathAsync(path, silent: true);
+    }
+
     [RelayCommand]
     private async Task OpenRepository()
     {
@@ -177,14 +184,17 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         {
             Title = "Select a Git repository folder"
         };
-
         if (dialog.ShowDialog() != true) return;
+        await OpenRepositoryPathAsync(dialog.FolderName);
+    }
 
+    private async Task OpenRepositoryPathAsync(string path, bool silent = false)
+    {
         IsBusy = true;
         StatusText = "Opening repository...";
         try
         {
-            await Task.Run(() => _repositoryService.Open(dialog.FolderName));
+            await Task.Run(() => _repositoryService.Open(path));
 
             var repoInfo = _repositoryService.CurrentRepository!;
             Title = $"{repoInfo.Name} — Wheelhouse";
@@ -192,8 +202,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
 
             _settingsService.Update(s =>
             {
-                s.RecentRepositories.Remove(dialog.FolderName);
-                s.RecentRepositories.Insert(0, dialog.FolderName);
+                s.RecentRepositories.Remove(path);
+                s.RecentRepositories.Insert(0, path);
                 while (s.RecentRepositories.Count > s.MaxRecentRepositories)
                     s.RecentRepositories.RemoveAt(s.RecentRepositories.Count - 1);
             });
@@ -202,9 +212,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         }
         catch (Exception ex)
         {
-            StatusText = "Failed to open repository";
-            MessageBox.Show($"Could not open repository:\n{ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusText = "Ready";
+            if (!silent)
+                MessageBox.Show($"Could not open repository:\n{ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {

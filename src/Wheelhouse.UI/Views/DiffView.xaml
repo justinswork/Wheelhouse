@@ -15,11 +15,25 @@
                 BorderBrush="{DynamicResource BrushBorderSubtle}"
                 BorderThickness="0,0,0,1"
                 Padding="8,4">
-            <TextBlock Text="{Binding DiffHeader}"
-                       FontFamily="{StaticResource FontMono}"
-                       FontSize="12"
-                       Foreground="{DynamicResource BrushOnSurface}"
-                       TextTrimming="CharacterEllipsis" />
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ToggleButton Content="Wrap"
+                                  IsChecked="{Binding IsWordWrap}"
+                                  Padding="6,2" FontSize="11"
+                                  BorderThickness="1"
+                                  Margin="0,0,4,0" />
+                    <ToggleButton Content="Side by Side"
+                                  IsChecked="{Binding IsSideBySide}"
+                                  Padding="6,2" FontSize="11"
+                                  BorderThickness="1" />
+                </StackPanel>
+                <TextBlock Text="{Binding DiffHeader}"
+                           FontFamily="{StaticResource FontMono}"
+                           FontSize="12"
+                           Foreground="{DynamicResource BrushOnSurface}"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center" />
+            </DockPanel>
         </Border>
 
         <!-- Loading indicator -->
@@ -44,8 +58,24 @@
                    Visibility="{Binding IsBinary, Converter={StaticResource BoolToVisibilityConverter}}" />
 
         <!-- Hunk list -->
-        <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
+                    <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+                    <Style.Triggers>
+                        <!-- Wrap mode: no horizontal scroll so lines can wrap within the viewport -->
+                        <DataTrigger Binding="{Binding IsWordWrap}" Value="True">
+                            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+                        </DataTrigger>
+                        <!-- Side-by-side mode: must constrain width so Grid * columns get a finite size;
+                             without this, the * columns collapse to 0 and the right (added) column disappears -->
+                        <DataTrigger Binding="{Binding IsSideBySide}" Value="True">
+                            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ScrollViewer.Style>
+
             <ItemsControl ItemsSource="{Binding Hunks}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:HunkViewModel}">
@@ -54,80 +84,154 @@
                             <!-- Hunk header toolbar -->
                             <Border Background="#1E3A5C" Padding="4,3">
                                 <DockPanel>
-                                    <!-- Unstage Hunk -->
                                     <Button DockPanel.Dock="Right"
                                             Content="Unstage Hunk"
                                             Command="{Binding UnstageHunkCommand}"
                                             Padding="6,2" FontSize="11"
-                                            Background="#2D6A9F"
-                                            Foreground="White"
-                                            BorderThickness="0"
-                                            Margin="4,0,0,0"
+                                            Background="#2D6A9F" Foreground="White"
+                                            BorderThickness="0" Margin="4,0,0,0"
                                             Visibility="{Binding CanUnstage, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                    <!-- Discard Hunk -->
                                     <Button DockPanel.Dock="Right"
                                             Content="Discard Hunk"
                                             Command="{Binding DiscardHunkCommand}"
                                             Padding="6,2" FontSize="11"
-                                            Background="#7B2D2D"
-                                            Foreground="White"
-                                            BorderThickness="0"
-                                            Margin="4,0,0,0"
+                                            Background="#7B2D2D" Foreground="White"
+                                            BorderThickness="0" Margin="4,0,0,0"
                                             Visibility="{Binding CanDiscard, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                    <!-- Stage Hunk -->
                                     <Button DockPanel.Dock="Right"
                                             Content="Stage Hunk"
                                             Command="{Binding StageHunkCommand}"
                                             Padding="6,2" FontSize="11"
-                                            Background="#1A5E3C"
-                                            Foreground="White"
-                                            BorderThickness="0"
-                                            Margin="4,0,0,0"
+                                            Background="#1A5E3C" Foreground="White"
+                                            BorderThickness="0" Margin="4,0,0,0"
                                             Visibility="{Binding CanStage, Converter={StaticResource BoolToVisibilityConverter}}" />
                                     <TextBlock Text="{Binding Header}"
                                                FontFamily="{StaticResource FontMono}"
-                                               FontSize="11"
-                                               Foreground="#7BC8F0"
+                                               FontSize="11" Foreground="#7BC8F0"
                                                VerticalAlignment="Center" />
                                 </DockPanel>
                             </Border>
 
-                            <!-- Diff lines -->
-                            <ItemsControl ItemsSource="{Binding Lines}">
+                            <!-- Inline diff lines (visible when not side-by-side) -->
+                            <ItemsControl ItemsSource="{Binding Lines}"
+                                          Visibility="{Binding IsSideBySide, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:DiffLineViewModel}">
                                         <Border Background="{Binding Background}">
                                             <DockPanel>
-                                                <!-- Old line number -->
                                                 <TextBlock Text="{Binding OldLineNo}"
                                                            Width="36"
-                                                           FontFamily="{StaticResource FontMono}"
-                                                           FontSize="11"
+                                                           FontFamily="{StaticResource FontMono}" FontSize="11"
                                                            Foreground="{DynamicResource BrushOnSurfaceMuted}"
-                                                           TextAlignment="Right"
-                                                           Padding="0,0,4,0" />
-                                                <!-- New line number -->
+                                                           TextAlignment="Right" Padding="0,0,4,0" />
                                                 <TextBlock Text="{Binding NewLineNo}"
                                                            Width="36"
-                                                           FontFamily="{StaticResource FontMono}"
-                                                           FontSize="11"
+                                                           FontFamily="{StaticResource FontMono}" FontSize="11"
                                                            Foreground="{DynamicResource BrushOnSurfaceMuted}"
-                                                           TextAlignment="Right"
-                                                           Padding="0,0,6,0" />
-                                                <!-- +/- prefix -->
+                                                           TextAlignment="Right" Padding="0,0,6,0" />
                                                 <TextBlock Text="{Binding Prefix}"
                                                            Width="12"
-                                                           FontFamily="{StaticResource FontMono}"
-                                                           FontSize="12"
+                                                           FontFamily="{StaticResource FontMono}" FontSize="12"
                                                            Foreground="{DynamicResource BrushOnSurface}" />
-                                                <!-- Line content -->
                                                 <TextBlock Text="{Binding Content}"
-                                                           FontFamily="{StaticResource FontMono}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource BrushOnSurface}"
-                                                           TextWrapping="NoWrap" />
+                                                           FontFamily="{StaticResource FontMono}" FontSize="12"
+                                                           Foreground="{DynamicResource BrushOnSurface}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="TextWrapping" Value="NoWrap" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.IsWordWrap,
+                                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                             Value="True">
+                                                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
                                             </DockPanel>
                                         </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Side-by-side diff lines (visible when side-by-side) -->
+                            <ItemsControl ItemsSource="{Binding SideBySideLines}"
+                                          Visibility="{Binding IsSideBySide, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:SideBySideLine}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="1" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Left (old) -->
+                                            <Border Background="{Binding OldBackground}" Grid.Column="0">
+                                                <DockPanel>
+                                                    <TextBlock Text="{Binding OldLineNo}"
+                                                               Width="36"
+                                                               FontFamily="{StaticResource FontMono}" FontSize="11"
+                                                               Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                                               TextAlignment="Right" Padding="0,0,4,0" />
+                                                    <TextBlock Text="{Binding OldPrefix}"
+                                                               Width="12"
+                                                               FontFamily="{StaticResource FontMono}" FontSize="12"
+                                                               Foreground="{DynamicResource BrushOnSurface}" />
+                                                    <TextBlock Text="{Binding OldContent}"
+                                                               FontFamily="{StaticResource FontMono}" FontSize="12"
+                                                               Foreground="{DynamicResource BrushOnSurface}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="TextWrapping" Value="NoWrap" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DataContext.IsWordWrap,
+                                                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                 Value="True">
+                                                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </DockPanel>
+                                            </Border>
+
+                                            <!-- Gutter -->
+                                            <Rectangle Grid.Column="1" Fill="{DynamicResource BrushBorderSubtle}" />
+
+                                            <!-- Right (new) -->
+                                            <Border Background="{Binding NewBackground}" Grid.Column="2">
+                                                <DockPanel>
+                                                    <TextBlock Text="{Binding NewLineNo}"
+                                                               Width="36"
+                                                               FontFamily="{StaticResource FontMono}" FontSize="11"
+                                                               Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                                                               TextAlignment="Right" Padding="0,0,4,0" />
+                                                    <TextBlock Text="{Binding NewPrefix}"
+                                                               Width="12"
+                                                               FontFamily="{StaticResource FontMono}" FontSize="12"
+                                                               Foreground="{DynamicResource BrushOnSurface}" />
+                                                    <TextBlock Text="{Binding NewContent}"
+                                                               FontFamily="{StaticResource FontMono}" FontSize="12"
+                                                               Foreground="{DynamicResource BrushOnSurface}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="TextWrapping" Value="NoWrap" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DataContext.IsWordWrap,
+                                                                        RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                 Value="True">
+                                                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </DockPanel>
+                                            </Border>
+                                        </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

@@ -16,6 +16,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
     IRecipient<CommitFileSelectedMessage>
 {
     private readonly IRepositoryService _repositoryService;
+    private readonly ISettingsService _settingsService;
     private string _currentFilePath = string.Empty;
     private bool _currentIsStaged;
     private CancellationTokenSource _loadCts = new();
@@ -25,11 +26,28 @@ public sealed partial class DiffViewModel : ViewModelBase,
     [ObservableProperty] private bool _isLoading = false;
     [ObservableProperty] private bool _isBinary = false;
     [ObservableProperty] private bool _isEmpty = true;
+    [ObservableProperty] private bool _isSideBySide;
+    [ObservableProperty] private bool _isWordWrap;
 
-    public DiffViewModel(IRepositoryService repositoryService)
+    public DiffViewModel(IRepositoryService repositoryService, ISettingsService settingsService)
     {
         _repositoryService = repositoryService;
+        _settingsService = settingsService;
+        _isSideBySide = settingsService.Current.DiffSideBySide;
+        _isWordWrap = settingsService.Current.DiffWordWrap;
         WeakReferenceMessenger.Default.RegisterAll(this);
+    }
+
+    partial void OnIsSideBySideChanged(bool value)
+    {
+        _settingsService.Update(s => s.DiffSideBySide = value);
+        foreach (var hunk in Hunks) hunk.IsSideBySide = value;
+    }
+
+    partial void OnIsWordWrapChanged(bool value)
+    {
+        _settingsService.Update(s => s.DiffWordWrap = value);
+        foreach (var hunk in Hunks) hunk.IsWordWrap = value;
     }
 
     async void IRecipient<FileSelectedForDiffMessage>.Receive(FileSelectedForDiffMessage msg)
@@ -42,7 +60,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
     async void IRecipient<WorkingTreeChangedMessage>.Receive(WorkingTreeChangedMessage _)
     {
         if (!string.IsNullOrEmpty(_currentFilePath) && _repositoryService.IsOpen)
-            await LoadDiffAsync(_currentFilePath, _currentIsStaged);
+            await LoadDiffAsync(_currentFilePath, _currentIsStaged, silent: true);
     }
 
     async void IRecipient<CommitSelectedMessage>.Receive(CommitSelectedMessage msg)
@@ -76,15 +94,14 @@ public sealed partial class DiffViewModel : ViewModelBase,
         });
     }
 
-    private async Task LoadDiffAsync(string filePath, bool isStaged)
+    private async Task LoadDiffAsync(string filePath, bool isStaged, bool silent = false)
     {
         // Cancel any in-flight load so only the latest request completes.
         var cts = new CancellationTokenSource();
         Interlocked.Exchange(ref _loadCts, cts).Cancel();
 
         if (!_repositoryService.IsOpen) return;
-        IsLoading = true;
-        IsEmpty = false;
+        if (!silent) { IsLoading = true; IsEmpty = false; }
         try
         {
             var diff = await _repositoryService.GetFileDiffAsync(filePath, isStaged, cts.Token);
@@ -105,7 +122,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
             var hunks = diff.IsBinary
                 ? []
                 : diff.Hunks
-                    .Select(h => new HunkViewModel(h, filePath, isStaged, diff.IsNew, diff.IsDeleted, _repositoryService))
+                    .Select(h => new HunkViewModel(h, filePath, isStaged, diff.IsNew, diff.IsDeleted, _repositoryService, isSideBySide: _isSideBySide, isWordWrap: _isWordWrap))
                     .ToList();
 
             Application.Current.Dispatcher.Invoke(() =>
@@ -128,7 +145,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
         }
         finally
         {
-            if (!cts.IsCancellationRequested)
+            if (!cts.IsCancellationRequested && !silent)
                 IsLoading = false;
         }
     }
@@ -156,7 +173,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
             var hunks = diff.IsBinary
                 ? []
                 : diff.Hunks
-                    .Select(h => new HunkViewModel(h, filePath, false, diff.IsNew, diff.IsDeleted, _repositoryService, isReadOnly: true))
+                    .Select(h => new HunkViewModel(h, filePath, false, diff.IsNew, diff.IsDeleted, _repositoryService, isReadOnly: true, isSideBySide: _isSideBySide, isWordWrap: _isWordWrap))
                     .ToList();
 
             Application.Current.Dispatcher.Invoke(() =>

@@ -74,6 +74,9 @@ public partial class App : Application
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         mainWindow.Show();
 
+        var mainVm = _host.Services.GetRequiredService<MainWindowViewModel>();
+        _ = mainVm.RestoreLastRepositoryAsync();
+
         // Fire-and-forget update check — runs after window is shown
         _ = _host.Services.GetRequiredService<UpdateCheckService>().CheckAsync();
 
