@@ -15,6 +15,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     IRecipient<OpenReflogMessage>,
     IRecipient<OpenFileHistoryMessage>,
     IRecipient<OpenBlameMessage>,
+    IRecipient<OpenIndexEditorMessage>,
     IRecipient<NavigateToCommitMessage>,
     IRecipient<OpenPullRequestsMessage>,
     IRecipient<UpdateAvailableMessage>
@@ -82,6 +83,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         WeakReferenceMessenger.Default.Register<OpenReflogMessage>(this);
         WeakReferenceMessenger.Default.Register<OpenFileHistoryMessage>(this);
         WeakReferenceMessenger.Default.Register<OpenBlameMessage>(this);
+        WeakReferenceMessenger.Default.Register<OpenIndexEditorMessage>(this);
         WeakReferenceMessenger.Default.Register<NavigateToCommitMessage>(this);
         WeakReferenceMessenger.Default.Register<OpenPullRequestsMessage>(this);
         WeakReferenceMessenger.Default.Register<UpdateAvailableMessage>(this);
@@ -126,6 +128,22 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
             {
                 var vm = new BlameViewModel(msg.FilePath, _repositoryService);
                 var header = string.Format(Strings.Tab_BlamePrefix, System.IO.Path.GetFileName(msg.FilePath));
+                existing = new TabDefinition(header, vm, canClose: true, onClose: RemoveTab);
+                Tabs.Add(existing);
+            }
+            ActiveTab = existing;
+        });
+    }
+
+    void IRecipient<OpenIndexEditorMessage>.Receive(OpenIndexEditorMessage msg)
+    {
+        var existing = Tabs.FirstOrDefault(t => t.ViewModel is IndexEditorViewModel ie && ie.FilePath == msg.FilePath);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (existing is null)
+            {
+                var vm = new IndexEditorViewModel(msg.FilePath, _repositoryService);
+                var header = string.Format(Strings.Tab_IndexEditorPrefix, System.IO.Path.GetFileName(msg.FilePath));
                 existing = new TabDefinition(header, vm, canClose: true, onClose: RemoveTab);
                 Tabs.Add(existing);
             }

@@ -53,4 +53,8 @@ public sealed partial class FileStatusItemViewModel : ViewModelBase
     [RelayCommand]
     private void OpenBlame() =>
         WeakReferenceMessenger.Default.Send(new OpenBlameMessage(FilePath));
+
+    [RelayCommand]
+    private void OpenIndexEditor() =>
+        WeakReferenceMessenger.Default.Send(new OpenIndexEditorMessage(FilePath));
 }

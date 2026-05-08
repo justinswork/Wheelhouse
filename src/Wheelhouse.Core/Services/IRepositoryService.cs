@@ -24,6 +24,15 @@ public interface IRepositoryService : IDisposable
     Task StageHunkAsync(string filePath, DiffHunk hunk, bool isNew, CancellationToken ct = default);
     Task UnstageHunkAsync(string filePath, DiffHunk hunk, CancellationToken ct = default);
     Task DiscardHunkAsync(string filePath, DiffHunk hunk, CancellationToken ct = default);
+    Task StageHunkLinesAsync(string filePath, DiffHunk hunk, bool isNew, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default);
+    Task UnstageHunkLinesAsync(string filePath, DiffHunk hunk, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default);
+    Task DiscardHunkLinesAsync(string filePath, DiffHunk hunk, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default);
+
+    // Index editor
+    Task<string> GetStagedFileContentAsync(string filePath, CancellationToken ct = default);
+    Task SetStagedFileContentAsync(string filePath, string content, CancellationToken ct = default);
+    Task<string> GetHeadFileContentAsync(string filePath, CancellationToken ct = default);
+    Task<IReadOnlyList<DiffHunk>> DiffContentsAsync(string leftContent, string rightContent, CancellationToken ct = default);
     Task CommitAsync(string message, bool amend = false, CancellationToken ct = default);
 
     Task FetchAsync(string? remoteName = null, CancellationToken ct = default);

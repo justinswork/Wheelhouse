@@ -165,6 +165,45 @@ public sealed class LibGit2SharpRepositoryService : IRepositoryService
         return GitCli.DiscardHunkAsync(CurrentRepository!.Path, filePath, hunk, ct);
     }
 
+    public Task StageHunkLinesAsync(string filePath, DiffHunk hunk, bool isNew, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.StageHunkLinesAsync(CurrentRepository!.Path, filePath, hunk, isNew, selectedLineIndices, ct);
+    }
+
+    public Task UnstageHunkLinesAsync(string filePath, DiffHunk hunk, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.UnstageHunkLinesAsync(CurrentRepository!.Path, filePath, hunk, selectedLineIndices, ct);
+    }
+
+    public Task DiscardHunkLinesAsync(string filePath, DiffHunk hunk, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.DiscardHunkLinesAsync(CurrentRepository!.Path, filePath, hunk, selectedLineIndices, ct);
+    }
+
+    public Task<string> GetStagedFileContentAsync(string filePath, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.GetStagedFileContentAsync(CurrentRepository!.Path, filePath, ct);
+    }
+
+    public Task SetStagedFileContentAsync(string filePath, string content, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.SetStagedFileContentAsync(CurrentRepository!.Path, filePath, content, ct);
+    }
+
+    public Task<string> GetHeadFileContentAsync(string filePath, CancellationToken ct = default)
+    {
+        EnsureOpen();
+        return GitCli.GetHeadFileContentAsync(CurrentRepository!.Path, filePath, ct);
+    }
+
+    public Task<IReadOnlyList<DiffHunk>> DiffContentsAsync(string leftContent, string rightContent, CancellationToken ct = default) =>
+        GitCli.DiffStringsAsync(leftContent, rightContent, ct);
+
     public async Task CommitAsync(string message, bool amend = false, CancellationToken ct = default)
     {
         EnsureOpen();

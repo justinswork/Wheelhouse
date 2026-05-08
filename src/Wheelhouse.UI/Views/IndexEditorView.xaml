@@ -1,0 +1,210 @@
+<UserControl x:Class="Wheelhouse.UI.Views.IndexEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Wheelhouse.UI.ViewModels"
+             xmlns:prop="clr-namespace:Wheelhouse.UI.Properties"
+             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+             d:DataContext="{d:DesignInstance vm:IndexEditorViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Background="{DynamicResource BrushBackground}"
+             Focusable="True"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded"
+             DataContextChanged="OnDataContextChanged"
+             PreviewKeyDown="OnPreviewKeyDown">
+    <DockPanel>
+
+        <!-- Header toolbar -->
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource BrushSurfaceAlt}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="0,0,0,1"
+                Padding="8,4">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="{x:Static prop:Strings.IndexEditor_PrevChange}"
+                            Click="OnPrevChangeClick"
+                            ToolTip="{x:Static prop:Strings.IndexEditor_PrevChange_Tooltip}"
+                            Padding="6,3" FontSize="11"
+                            Background="Transparent" BorderThickness="1"
+                            Margin="0,0,4,0" />
+                    <Button Content="{x:Static prop:Strings.IndexEditor_NextChange}"
+                            Click="OnNextChangeClick"
+                            ToolTip="{x:Static prop:Strings.IndexEditor_NextChange_Tooltip}"
+                            Padding="6,3" FontSize="11"
+                            Background="Transparent" BorderThickness="1"
+                            Margin="0,0,12,0" />
+                    <Button Content="{x:Static prop:Strings.IndexEditor_TakeLeft}"
+                            Click="OnTakeLeftClick"
+                            IsEnabled="{Binding CanTakeLeft}"
+                            ToolTip="{x:Static prop:Strings.IndexEditor_TakeLeft_Tooltip}"
+                            Padding="8,3" FontSize="11"
+                            Background="Transparent" BorderThickness="1"
+                            Margin="0,0,4,0" />
+                    <Button Content="{x:Static prop:Strings.IndexEditor_TakeRight}"
+                            Click="OnTakeRightClick"
+                            IsEnabled="{Binding CanTakeRight}"
+                            ToolTip="{x:Static prop:Strings.IndexEditor_TakeRight_Tooltip}"
+                            Padding="8,3" FontSize="11"
+                            Background="Transparent" BorderThickness="1"
+                            Margin="0,0,12,0" />
+                    <Button Content="{x:Static prop:Strings.IndexEditor_Reload}"
+                            Command="{Binding ReloadCommand}"
+                            ToolTip="{x:Static prop:Strings.IndexEditor_Reload_Tooltip}"
+                            Padding="8,3" FontSize="11"
+                            Background="Transparent" BorderThickness="1"
+                            Margin="0,0,4,0" />
+                    <Button Content="{x:Static prop:Strings.IndexEditor_Apply}"
+                            Command="{Binding ApplyToIndexCommand}"
+                            IsEnabled="{Binding IsModified}"
+                            ToolTip="{x:Static prop:Strings.IndexEditor_Apply_Tooltip}"
+                            Padding="8,3" FontSize="11" FontWeight="SemiBold"
+                            Background="#1A5E3C" Foreground="White"
+                            BorderThickness="0" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding FilePath}"
+                               FontFamily="{StaticResource FontMono}"
+                               FontSize="12"
+                               Foreground="{DynamicResource BrushOnSurface}"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{x:Static prop:Strings.IndexEditor_Modified}"
+                               Foreground="#CF8032"
+                               Margin="6,0,0,0"
+                               FontSize="14"
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsModified, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom"
+                Background="{DynamicResource BrushSurfaceAlt}"
+                BorderBrush="{DynamicResource BrushBorderSubtle}"
+                BorderThickness="0,1,0,0"
+                Padding="8,3">
+            <TextBlock Text="{Binding StatusText}"
+                       FontSize="11"
+                       Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+        </Border>
+
+        <!-- Loading indicator -->
+        <TextBlock DockPanel.Dock="Top"
+                   Text="{x:Static prop:Strings.IndexEditor_Loading}"
+                   Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                   Margin="8,4"
+                   Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+        <!-- Error banner -->
+        <Border DockPanel.Dock="Top"
+                Background="#FFEBE9" BorderBrush="#FFCFC9" BorderThickness="0,0,0,1"
+                Padding="8,6"
+                Visibility="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+            <TextBlock Text="{Binding ErrorMessage}" FontSize="11" Foreground="#CF222E"
+                       TextWrapping="Wrap" />
+        </Border>
+
+        <!-- Three-pane editor area: HEAD | Index | Working Tree -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="4" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="4" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- HEAD pane (read-only) -->
+            <DockPanel Grid.Column="0">
+                <Border DockPanel.Dock="Top"
+                        Background="{DynamicResource BrushSurfaceAlt}"
+                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,3">
+                    <TextBlock Text="{x:Static prop:Strings.IndexEditor_Header_Head}"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                </Border>
+                <Grid>
+                    <avalonEdit:TextEditor x:Name="HeadEditor"
+                                           Document="{Binding HeadDocument}"
+                                           IsReadOnly="True"
+                                           ShowLineNumbers="True"
+                                           FontFamily="{StaticResource FontMono}"
+                                           FontSize="12"
+                                           WordWrap="False"
+                                           HorizontalScrollBarVisibility="Auto"
+                                           VerticalScrollBarVisibility="Auto" />
+                    <TextBlock Text="{x:Static prop:Strings.IndexEditor_HeadEmpty_Watermark}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="12" FontStyle="Italic"
+                               Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                               IsHitTestVisible="False"
+                               Visibility="{Binding IsHeadEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                          Background="{DynamicResource BrushBorderSubtle}" />
+
+            <!-- Index pane (editable) -->
+            <DockPanel Grid.Column="2">
+                <Border DockPanel.Dock="Top"
+                        Background="{DynamicResource BrushSurfaceAlt}"
+                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,3">
+                    <TextBlock Text="{x:Static prop:Strings.IndexEditor_Header_Index}"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                </Border>
+                <avalonEdit:TextEditor x:Name="IndexEditor"
+                                       Document="{Binding IndexDocument}"
+                                       ShowLineNumbers="True"
+                                       FontFamily="{StaticResource FontMono}"
+                                       FontSize="12"
+                                       WordWrap="False"
+                                       HorizontalScrollBarVisibility="Auto"
+                                       VerticalScrollBarVisibility="Auto" />
+            </DockPanel>
+
+            <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Stretch"
+                          Background="{DynamicResource BrushBorderSubtle}" />
+
+            <!-- Working Tree pane (read-only) -->
+            <DockPanel Grid.Column="4">
+                <Border DockPanel.Dock="Top"
+                        Background="{DynamicResource BrushSurfaceAlt}"
+                        BorderBrush="{DynamicResource BrushBorderSubtle}"
+                        BorderThickness="0,0,0,1"
+                        Padding="8,3">
+                    <TextBlock Text="{x:Static prop:Strings.IndexEditor_Header_WorkingTree}"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource BrushOnSurfaceMuted}" />
+                </Border>
+                <Grid>
+                    <avalonEdit:TextEditor x:Name="WtEditor"
+                                           Document="{Binding WtDocument}"
+                                           IsReadOnly="True"
+                                           ShowLineNumbers="True"
+                                           FontFamily="{StaticResource FontMono}"
+                                           FontSize="12"
+                                           WordWrap="False"
+                                           HorizontalScrollBarVisibility="Auto"
+                                           VerticalScrollBarVisibility="Auto" />
+                    <TextBlock Text="{x:Static prop:Strings.IndexEditor_WtEmpty_Watermark}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontSize="12" FontStyle="Italic"
+                               Foreground="{DynamicResource BrushOnSurfaceMuted}"
+                               IsHitTestVisible="False"
+                               Visibility="{Binding IsWtEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+            </DockPanel>
+        </Grid>
+
+    </DockPanel>
+</UserControl>

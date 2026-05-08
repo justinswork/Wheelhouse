@@ -307,6 +307,86 @@
   <data name="Diff_DiscardHunk" xml:space="preserve">
     <value>Discard Hunk</value>
   </data>
+  <data name="Diff_StageLines" xml:space="preserve">
+    <value>Stage Lines</value>
+  </data>
+  <data name="Diff_UnstageLines" xml:space="preserve">
+    <value>Unstage Lines</value>
+  </data>
+  <data name="Diff_DiscardLines" xml:space="preserve">
+    <value>Discard Lines</value>
+  </data>
+
+  <!-- Index editor -->
+  <data name="IndexEditor_Apply" xml:space="preserve">
+    <value>Apply to Index</value>
+  </data>
+  <data name="IndexEditor_Reload" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="IndexEditor_Loading" xml:space="preserve">
+    <value>Loading staged content...</value>
+  </data>
+  <data name="IndexEditor_Modified" xml:space="preserve">
+    <value>●</value>
+  </data>
+  <data name="IndexEditor_TakeLeft" xml:space="preserve">
+    <value>← Take Left</value>
+  </data>
+  <data name="IndexEditor_TakeRight" xml:space="preserve">
+    <value>Take Right →</value>
+  </data>
+  <data name="IndexEditor_PrevChange" xml:space="preserve">
+    <value>▲ Prev</value>
+  </data>
+  <data name="IndexEditor_NextChange" xml:space="preserve">
+    <value>▼ Next</value>
+  </data>
+  <data name="IndexEditor_Header_Head" xml:space="preserve">
+    <value>HEAD (read-only)</value>
+  </data>
+  <data name="IndexEditor_Header_Index" xml:space="preserve">
+    <value>Index</value>
+  </data>
+  <data name="IndexEditor_Header_WorkingTree" xml:space="preserve">
+    <value>Working Tree (read-only)</value>
+  </data>
+  <data name="IndexEditor_Status_NoChanges" xml:space="preserve">
+    <value>No differences</value>
+  </data>
+  <data name="IndexEditor_Status_Format" xml:space="preserve">
+    <value>{0} HEAD change(s), {1} Working Tree change(s)</value>
+  </data>
+  <data name="IndexEditor_Confirm_Discard_Title" xml:space="preserve">
+    <value>Discard Unsaved Changes?</value>
+  </data>
+  <data name="IndexEditor_Confirm_Discard_Message" xml:space="preserve">
+    <value>You have unsaved changes in the Index editor.&#xA;&#xA;Discard them and reload from disk?</value>
+  </data>
+  <data name="IndexEditor_HeadEmpty_Watermark" xml:space="preserve">
+    <value>(file not in HEAD)</value>
+  </data>
+  <data name="IndexEditor_WtEmpty_Watermark" xml:space="preserve">
+    <value>(file not in working tree)</value>
+  </data>
+  <data name="IndexEditor_TakeLeft_Tooltip" xml:space="preserve">
+    <value>Replace current hunk in Index with HEAD's version (Alt+Left)</value>
+  </data>
+  <data name="IndexEditor_TakeRight_Tooltip" xml:space="preserve">
+    <value>Replace current hunk in Index with Working Tree's version (Alt+Right)</value>
+  </data>
+  <data name="IndexEditor_PrevChange_Tooltip" xml:space="preserve">
+    <value>Previous change (Shift+F3)</value>
+  </data>
+  <data name="IndexEditor_NextChange_Tooltip" xml:space="preserve">
+    <value>Next change (F3)</value>
+  </data>
+  <data name="IndexEditor_Apply_Tooltip" xml:space="preserve">
+    <value>Apply changes to Index (Ctrl+S)</value>
+  </data>
+  <data name="IndexEditor_Reload_Tooltip" xml:space="preserve">
+    <value>Reload Index, HEAD and Working Tree from disk</value>
+  </data>
 
   <!-- Tabs -->
   <data name="Tab_WorkingTree" xml:space="preserve">
@@ -326,6 +406,9 @@
   </data>
   <data name="Tab_BlamePrefix" xml:space="preserve">
     <value>Blame: {0}</value>
+  </data>
+  <data name="Tab_IndexEditorPrefix" xml:space="preserve">
+    <value>Index: {0}</value>
   </data>
 
   <!-- Status -->
@@ -396,6 +479,9 @@
   <data name="Dialog_DiscardHunk_Message" xml:space="preserve">
     <value>Discard this hunk?&#xA;&#xA;This will permanently remove these working-tree changes.</value>
   </data>
+  <data name="Dialog_DiscardLines_Message" xml:space="preserve">
+    <value>Discard the selected lines?&#xA;&#xA;This will permanently remove these working-tree changes.</value>
+  </data>
   <data name="Dialog_Error" xml:space="preserve">
     <value>Error</value>
   </data>
@@ -445,6 +531,9 @@
   </data>
   <data name="Branch_Blame" xml:space="preserve">
     <value>Blame</value>
+  </data>
+  <data name="WorkingTree_EditInIndex" xml:space="preserve">
+    <value>Edit in Index...</value>
   </data>
 
   <!-- Log context menu -->

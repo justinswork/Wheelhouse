@@ -26,10 +26,16 @@ public sealed partial class HunkViewModel : ViewModelBase
 
     [ObservableProperty] private bool _isSideBySide;
     [ObservableProperty] private bool _isWordWrap;
+    [ObservableProperty] private bool _hasSelectedLines;
 
     public bool CanStage   => !_isStaged && !_isReadOnly;
     public bool CanUnstage => _isStaged && !_isReadOnly;
     public bool CanDiscard => !_isStaged && !_isReadOnly;
+
+    public bool IsSelectionEnabled => !_isReadOnly && (CanStage || CanUnstage || CanDiscard);
+    public bool CanStageSelected   => CanStage   && HasSelectedLines;
+    public bool CanUnstageSelected => CanUnstage && HasSelectedLines;
+    public bool CanDiscardSelected => CanDiscard && HasSelectedLines;
 
     public HunkViewModel(DiffHunk hunk, string filePath, bool isStaged, bool isNew, bool isDeleted, IRepositoryService service, bool isReadOnly = false, bool isSideBySide = false, bool isWordWrap = false)
     {
@@ -44,6 +50,20 @@ public sealed partial class HunkViewModel : ViewModelBase
         _isWordWrap = isWordWrap;
         Lines = hunk.Lines.Select(l => new DiffLineViewModel(l)).ToList();
         SideBySideLines = BuildSideBySide(Lines);
+
+        foreach (var line in Lines)
+            line.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(DiffLineViewModel.IsSelected))
+                    HasSelectedLines = Lines.Any(l => l.IsSelected);
+            };
+    }
+
+    partial void OnHasSelectedLinesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanStageSelected));
+        OnPropertyChanged(nameof(CanUnstageSelected));
+        OnPropertyChanged(nameof(CanDiscardSelected));
     }
 
     private static IReadOnlyList<SideBySideLine> BuildSideBySide(IReadOnlyList<DiffLineViewModel> lines)
@@ -128,6 +148,69 @@ public sealed partial class HunkViewModel : ViewModelBase
             MessageBox.Show($"Discard hunk failed: {ex.Message}", Strings.Diff_DiscardHunk, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
+    [RelayCommand]
+    private async Task StageSelectedLinesAsync()
+    {
+        var indices = GetSelectedIndices();
+        try
+        {
+            await _service.StageHunkLinesAsync(_filePath, _hunk, _isNew, indices);
+            ClearLineSelection();
+            WeakReferenceMessenger.Default.Send(new WorkingTreeChangedMessage());
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Stage lines failed: {ex.Message}", Strings.Diff_StageLines, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task UnstageSelectedLinesAsync()
+    {
+        var indices = GetSelectedIndices();
+        try
+        {
+            await _service.UnstageHunkLinesAsync(_filePath, _hunk, indices);
+            ClearLineSelection();
+            WeakReferenceMessenger.Default.Send(new WorkingTreeChangedMessage());
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Unstage lines failed: {ex.Message}", Strings.Diff_UnstageLines, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DiscardSelectedLinesAsync()
+    {
+        if (MessageBox.Show(Strings.Dialog_DiscardLines_Message,
+                Strings.Dialog_DiscardHunk_Title, MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+        var indices = GetSelectedIndices();
+        try
+        {
+            await _service.DiscardHunkLinesAsync(_filePath, _hunk, indices);
+            ClearLineSelection();
+            WeakReferenceMessenger.Default.Send(new WorkingTreeChangedMessage());
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Discard lines failed: {ex.Message}", Strings.Diff_DiscardLines, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private IReadOnlySet<int> GetSelectedIndices() =>
+        Lines.Select((l, i) => (l, i))
+             .Where(x => x.l.IsSelected)
+             .Select(x => x.i)
+             .ToHashSet();
+
+    private void ClearLineSelection()
+    {
+        foreach (var line in Lines)
+            line.IsSelected = false;
+    }
 }
 
 public sealed class SideBySideLine
@@ -157,10 +240,12 @@ public sealed class SideBySideLine
     }
 }
 
-public sealed class DiffLineViewModel
+public sealed partial class DiffLineViewModel : ObservableObject
 {
     private static readonly Brush AddedBrush   = new SolidColorBrush(Color.FromArgb(60, 0x1A, 0x7F, 0x37));
     private static readonly Brush RemovedBrush = new SolidColorBrush(Color.FromArgb(60, 0xCF, 0x22, 0x2E));
+
+    [ObservableProperty] private bool _isSelected;
 
     public DiffLineType Type { get; }
     public string Content { get; }
@@ -170,6 +255,10 @@ public sealed class DiffLineViewModel
     public string OldLineNo => OldLineNumber?.ToString() ?? string.Empty;
     public string NewLineNo => NewLineNumber?.ToString() ?? string.Empty;
     public Brush Background => Type == DiffLineType.Added ? AddedBrush : Type == DiffLineType.Removed ? RemovedBrush : Brushes.Transparent;
+
+    public bool IsSelectable => Type == DiffLineType.Added || Type == DiffLineType.Removed;
+    // Hidden (takes layout space) for context lines so the checkbox column stays aligned
+    public Visibility SelectableVisibility => IsSelectable ? Visibility.Visible : Visibility.Hidden;
 
     public DiffLineViewModel(DiffLine line)
     {

@@ -307,6 +307,15 @@
   <data name="Diff_DiscardHunk" xml:space="preserve">
     <value>Ignorer le bloc</value>
   </data>
+  <data name="Diff_StageLines" xml:space="preserve">
+    <value>Indexer les lignes</value>
+  </data>
+  <data name="Diff_UnstageLines" xml:space="preserve">
+    <value>Désindexer les lignes</value>
+  </data>
+  <data name="Diff_DiscardLines" xml:space="preserve">
+    <value>Ignorer les lignes</value>
+  </data>
 
   <!-- Tabs -->
   <data name="Tab_WorkingTree" xml:space="preserve">
@@ -395,6 +404,9 @@
   </data>
   <data name="Dialog_DiscardHunk_Message" xml:space="preserve">
     <value>Ignorer ce bloc ?&#xA;&#xA;Cela supprimera définitivement ces modifications de l'arbre de travail.</value>
+  </data>
+  <data name="Dialog_DiscardLines_Message" xml:space="preserve">
+    <value>Ignorer les lignes sélectionnées ?&#xA;&#xA;Cela supprimera définitivement ces modifications de l'arbre de travail.</value>
   </data>
   <data name="Dialog_Error" xml:space="preserve">
     <value>Erreur</value>

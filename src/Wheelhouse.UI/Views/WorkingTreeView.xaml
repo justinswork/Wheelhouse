@@ -73,6 +73,8 @@
                             <Grid Margin="4,2">
                                 <Grid.ContextMenu>
                                     <ContextMenu>
+                                        <MenuItem Header="{x:Static prop:Strings.WorkingTree_EditInIndex}" Command="{Binding OpenIndexEditorCommand}" />
+                                        <Separator />
                                         <MenuItem Header="{x:Static prop:Strings.Branch_FileHistory}" Command="{Binding OpenFileHistoryCommand}" />
                                         <MenuItem Header="{x:Static prop:Strings.Branch_Blame}" Command="{Binding OpenBlameCommand}" />
                                     </ContextMenu>
@@ -148,6 +150,8 @@
                             <Grid Margin="4,2">
                                 <Grid.ContextMenu>
                                     <ContextMenu>
+                                        <MenuItem Header="{x:Static prop:Strings.WorkingTree_EditInIndex}" Command="{Binding OpenIndexEditorCommand}" />
+                                        <Separator />
                                         <MenuItem Header="{x:Static prop:Strings.Branch_FileHistory}" Command="{Binding OpenFileHistoryCommand}" />
                                         <MenuItem Header="{x:Static prop:Strings.Branch_Blame}" Command="{Binding OpenBlameCommand}" />
                                     </ContextMenu>

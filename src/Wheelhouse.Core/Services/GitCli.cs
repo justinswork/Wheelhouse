@@ -101,6 +101,15 @@ internal static class GitCli
     internal static Task DiscardHunkAsync(string repoPath, string filePath, DiffHunk hunk, CancellationToken ct = default) =>
         ApplyPatchAsync(repoPath, BuildHunkPatch(filePath, hunk, false, false), cached: false, reverse: true, ct);
 
+    internal static Task StageHunkLinesAsync(string repoPath, string filePath, DiffHunk hunk, bool isNew, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default) =>
+        ApplyPatchAsync(repoPath, BuildPartialHunkPatch(filePath, hunk, isNew, selectedLineIndices), cached: true, reverse: false, ct);
+
+    internal static Task UnstageHunkLinesAsync(string repoPath, string filePath, DiffHunk hunk, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default) =>
+        ApplyPatchAsync(repoPath, BuildPartialHunkPatch(filePath, hunk, false, selectedLineIndices), cached: true, reverse: true, ct);
+
+    internal static Task DiscardHunkLinesAsync(string repoPath, string filePath, DiffHunk hunk, IReadOnlySet<int> selectedLineIndices, CancellationToken ct = default) =>
+        ApplyPatchAsync(repoPath, BuildPartialHunkPatch(filePath, hunk, false, selectedLineIndices), cached: false, reverse: true, ct);
+
     internal static string BuildHunkPatch(string filePath, DiffHunk hunk, bool isNew, bool isDeleted)
     {
         // git apply requires Unix line endings (\n) regardless of platform
@@ -123,6 +132,67 @@ internal static class GitCli
             };
             sb.Append(prefix).Append(line.Content.TrimEnd('\r')).Append('\n');
         }
+        return sb.ToString();
+    }
+
+    internal static string BuildPartialHunkPatch(string filePath, DiffHunk hunk, bool isNew, IReadOnlySet<int> selectedLineIndices)
+    {
+        // Parse the old/new start lines from the hunk header "@@ -A,B +C,D @@"
+        var match = Regex.Match(hunk.Header, @"@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@");
+        var oldStart = match.Success ? int.Parse(match.Groups[1].Value) : 1;
+        var newStart = match.Success ? int.Parse(match.Groups[2].Value) : 1;
+
+        var patchLines = new List<(char Prefix, string Content)>();
+        int oldCount = 0, newCount = 0;
+
+        for (int i = 0; i < hunk.Lines.Count; i++)
+        {
+            var line = hunk.Lines[i];
+            bool selected = selectedLineIndices.Contains(i);
+
+            switch (line.Type)
+            {
+                case DiffLineType.Context:
+                case DiffLineType.Header:
+                    patchLines.Add((' ', line.Content));
+                    oldCount++;
+                    newCount++;
+                    break;
+                case DiffLineType.Removed:
+                    if (selected)
+                    {
+                        patchLines.Add(('-', line.Content));
+                        oldCount++;
+                    }
+                    else
+                    {
+                        // Unselected removal: treat as context so the line stays unchanged
+                        patchLines.Add((' ', line.Content));
+                        oldCount++;
+                        newCount++;
+                    }
+                    break;
+                case DiffLineType.Added:
+                    if (selected)
+                    {
+                        patchLines.Add(('+', line.Content));
+                        newCount++;
+                    }
+                    // Unselected addition: omit — it won't be staged
+                    break;
+            }
+        }
+
+        var sb = new System.Text.StringBuilder();
+        var oldPath = isNew ? "/dev/null" : $"a/{filePath}";
+        var newPath = $"b/{filePath}";
+        sb.Append($"diff --git a/{filePath} b/{filePath}\n");
+        if (isNew) sb.Append("new file mode 100644\n");
+        sb.Append($"--- {oldPath}\n");
+        sb.Append($"+++ {newPath}\n");
+        sb.Append($"@@ -{oldStart},{oldCount} +{newStart},{newCount} @@\n");
+        foreach (var (prefix, content) in patchLines)
+            sb.Append(prefix).Append(content.TrimEnd('\r')).Append('\n');
         return sb.ToString();
     }
 
@@ -195,6 +265,89 @@ internal static class GitCli
             newPath ?? filePath,
             isBinary, isNew, isDeleted, isRenamed,
             added, removed, hunks);
+    }
+
+    // Index editor — read/write staged file content, diff utility
+
+    internal static async Task<string> GetHeadFileContentAsync(string repoPath, string filePath, CancellationToken ct = default)
+    {
+        try { return await RunAsync(repoPath, $"show \"HEAD:{filePath.Replace('\\', '/')}\"", ct); }
+        catch { return string.Empty; } // new file not yet in HEAD
+    }
+
+    internal static async Task<IReadOnlyList<DiffHunk>> DiffStringsAsync(string leftContent, string rightContent, CancellationToken ct = default)
+    {
+        var leftFile  = Path.GetTempFileName();
+        var rightFile = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(leftFile,  leftContent,  new UTF8Encoding(false), ct);
+            await File.WriteAllTextAsync(rightFile, rightContent, new UTF8Encoding(false), ct);
+
+            var psi = new ProcessStartInfo("git", $"diff --no-index -- \"{leftFile}\" \"{rightFile}\"")
+            {
+                WorkingDirectory        = Path.GetTempPath(),
+                RedirectStandardOutput  = true,
+                RedirectStandardError   = true,
+                UseShellExecute         = false,
+                CreateNoWindow          = true,
+                StandardOutputEncoding  = Encoding.UTF8,
+            };
+
+            using var proc = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start git.");
+            var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+            await proc.WaitForExitAsync(ct);
+            var stdout = await stdoutTask;
+
+            if (proc.ExitCode > 1)
+            {
+                var stderr = await proc.StandardError.ReadToEndAsync(ct);
+                throw new InvalidOperationException($"git diff: {stderr.Trim()}");
+            }
+
+            return DiffParser.ParseHunks(stdout);
+        }
+        finally
+        {
+            File.Delete(leftFile);
+            File.Delete(rightFile);
+        }
+    }
+
+    internal static async Task<string> GetStagedFileContentAsync(string repoPath, string filePath, CancellationToken ct = default)
+    {
+        try { return await RunAsync(repoPath, $"show \":0:{filePath.Replace('\\', '/')}\"", ct); }
+        catch { return string.Empty; } // file not in index (untracked, or new file before staging)
+    }
+
+    internal static async Task SetStagedFileContentAsync(string repoPath, string filePath, string content, CancellationToken ct = default)
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), ct);
+
+            // Hash the new content into the object store
+            var sha = (await RunAsync(repoPath, $"hash-object -w \"{tempFile}\"", ct)).Trim();
+
+            // Discover the existing file mode from the index (default 100644 for new/missing)
+            string mode = "100644";
+            try
+            {
+                var ls = await RunAsync(repoPath, $"ls-files -s -- \"{filePath}\"", ct);
+                var parts = ls.TrimStart().Split(' ');
+                if (parts.Length >= 1 && !string.IsNullOrEmpty(parts[0]))
+                    mode = parts[0];
+            }
+            catch { }
+
+            // Three-arg form handles paths with spaces more reliably than comma-delimited
+            await RunAsync(repoPath, $"update-index --cacheinfo {mode} {sha} \"{filePath.Replace('\\', '/')}\"", ct);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
     }
 
     // Branch management

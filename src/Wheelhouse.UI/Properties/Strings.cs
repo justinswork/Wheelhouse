@@ -102,6 +102,9 @@ public static class Strings
     public static string Diff_StageHunk => Get(nameof(Diff_StageHunk));
     public static string Diff_UnstageHunk => Get(nameof(Diff_UnstageHunk));
     public static string Diff_DiscardHunk => Get(nameof(Diff_DiscardHunk));
+    public static string Diff_StageLines => Get(nameof(Diff_StageLines));
+    public static string Diff_UnstageLines => Get(nameof(Diff_UnstageLines));
+    public static string Diff_DiscardLines => Get(nameof(Diff_DiscardLines));
 
     // Tabs
     public static string Tab_WorkingTree => Get(nameof(Tab_WorkingTree));
@@ -110,6 +113,7 @@ public static class Strings
     public static string Tab_PullRequests => Get(nameof(Tab_PullRequests));
     public static string Tab_HistoryPrefix => Get(nameof(Tab_HistoryPrefix));
     public static string Tab_BlamePrefix => Get(nameof(Tab_BlamePrefix));
+    public static string Tab_IndexEditorPrefix => Get(nameof(Tab_IndexEditorPrefix));
 
     // Status
     public static string Status_Ready => Get(nameof(Status_Ready));
@@ -137,6 +141,7 @@ public static class Strings
     // Dialogs / errors
     public static string Dialog_DiscardHunk_Title => Get(nameof(Dialog_DiscardHunk_Title));
     public static string Dialog_DiscardHunk_Message => Get(nameof(Dialog_DiscardHunk_Message));
+    public static string Dialog_DiscardLines_Message => Get(nameof(Dialog_DiscardLines_Message));
     public static string Dialog_Error => Get(nameof(Dialog_Error));
     public static string Dialog_Warning => Get(nameof(Dialog_Warning));
     public static string Error_OpenRepo => Get(nameof(Error_OpenRepo));
@@ -155,6 +160,32 @@ public static class Strings
     public static string Branch_SetUpstream => Get(nameof(Branch_SetUpstream));
     public static string Branch_FileHistory => Get(nameof(Branch_FileHistory));
     public static string Branch_Blame => Get(nameof(Branch_Blame));
+    public static string WorkingTree_EditInIndex => Get(nameof(WorkingTree_EditInIndex));
+
+    // Index editor
+    public static string IndexEditor_Apply => Get(nameof(IndexEditor_Apply));
+    public static string IndexEditor_Reload => Get(nameof(IndexEditor_Reload));
+    public static string IndexEditor_Loading => Get(nameof(IndexEditor_Loading));
+    public static string IndexEditor_Modified => Get(nameof(IndexEditor_Modified));
+    public static string IndexEditor_TakeLeft => Get(nameof(IndexEditor_TakeLeft));
+    public static string IndexEditor_TakeRight => Get(nameof(IndexEditor_TakeRight));
+    public static string IndexEditor_PrevChange => Get(nameof(IndexEditor_PrevChange));
+    public static string IndexEditor_NextChange => Get(nameof(IndexEditor_NextChange));
+    public static string IndexEditor_Header_Head => Get(nameof(IndexEditor_Header_Head));
+    public static string IndexEditor_Header_Index => Get(nameof(IndexEditor_Header_Index));
+    public static string IndexEditor_Header_WorkingTree => Get(nameof(IndexEditor_Header_WorkingTree));
+    public static string IndexEditor_Status_NoChanges => Get(nameof(IndexEditor_Status_NoChanges));
+    public static string IndexEditor_Status_Format => Get(nameof(IndexEditor_Status_Format));
+    public static string IndexEditor_Confirm_Discard_Title => Get(nameof(IndexEditor_Confirm_Discard_Title));
+    public static string IndexEditor_Confirm_Discard_Message => Get(nameof(IndexEditor_Confirm_Discard_Message));
+    public static string IndexEditor_HeadEmpty_Watermark => Get(nameof(IndexEditor_HeadEmpty_Watermark));
+    public static string IndexEditor_WtEmpty_Watermark => Get(nameof(IndexEditor_WtEmpty_Watermark));
+    public static string IndexEditor_TakeLeft_Tooltip => Get(nameof(IndexEditor_TakeLeft_Tooltip));
+    public static string IndexEditor_TakeRight_Tooltip => Get(nameof(IndexEditor_TakeRight_Tooltip));
+    public static string IndexEditor_PrevChange_Tooltip => Get(nameof(IndexEditor_PrevChange_Tooltip));
+    public static string IndexEditor_NextChange_Tooltip => Get(nameof(IndexEditor_NextChange_Tooltip));
+    public static string IndexEditor_Apply_Tooltip => Get(nameof(IndexEditor_Apply_Tooltip));
+    public static string IndexEditor_Reload_Tooltip => Get(nameof(IndexEditor_Reload_Tooltip));
 
     // Relative dates
     public static string Date_JustNow => Get(nameof(Date_JustNow));
