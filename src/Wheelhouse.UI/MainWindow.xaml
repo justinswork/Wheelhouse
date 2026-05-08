@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Wheelhouse.UI.ViewModels"
         xmlns:views="clr-namespace:Wheelhouse.UI.Views"
+        xmlns:prop="clr-namespace:Wheelhouse.UI.Properties"
         mc:Ignorable="d"
         Title="{Binding Title}"
         Height="800" Width="1280"
@@ -44,61 +45,61 @@
         <Menu DockPanel.Dock="Top"
               Background="{DynamicResource BrushSurface}"
               Foreground="{DynamicResource BrushOnSurface}">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open Repository..." Command="{Binding OpenRepositoryCommand}" InputGestureText="Ctrl+O" />
-                <MenuItem Header="_Clone Repository..." IsEnabled="False" />
-                <MenuItem Header="Initialize _New Repository..." IsEnabled="False" />
+            <MenuItem Header="{x:Static prop:Strings.Menu_File}">
+                <MenuItem Header="{x:Static prop:Strings.Menu_File_Open}" Command="{Binding OpenRepositoryCommand}" InputGestureText="Ctrl+O" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_File_Clone}" IsEnabled="False" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_File_Init}" IsEnabled="False" />
                 <Separator />
-                <MenuItem Header="E_xit" Click="OnExitClick" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_File_Exit}" Click="OnExitClick" />
             </MenuItem>
-            <MenuItem Header="_View">
-                <MenuItem Header="_Terminal" Command="{Binding ToggleTerminalCommand}"
+            <MenuItem Header="{x:Static prop:Strings.Menu_View}">
+                <MenuItem Header="{x:Static prop:Strings.Menu_View_Terminal}" Command="{Binding ToggleTerminalCommand}"
                           IsCheckable="True" IsChecked="{Binding IsTerminalVisible}" InputGestureText="Ctrl+`" />
-                <MenuItem Header="_Reflog" Command="{Binding OpenReflogCommand}" />
-                <MenuItem Header="_Pull Requests" Command="{Binding OpenPullRequestsCommand}" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_View_Reflog}" Command="{Binding OpenReflogCommand}" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_View_PullRequests}" Command="{Binding OpenPullRequestsCommand}" />
                 <Separator />
-                <MenuItem Header="_Theme">
-                    <MenuItem Header="_Light"  Command="{Binding SetThemeCommand}" CommandParameter="Light" />
-                    <MenuItem Header="_Dark"   Command="{Binding SetThemeCommand}" CommandParameter="Dark" />
-                    <MenuItem Header="_System" Command="{Binding SetThemeCommand}" CommandParameter="System" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_View_Theme}">
+                    <MenuItem Header="{x:Static prop:Strings.Menu_View_Theme_Light}"  Command="{Binding SetThemeCommand}" CommandParameter="Light" />
+                    <MenuItem Header="{x:Static prop:Strings.Menu_View_Theme_Dark}"   Command="{Binding SetThemeCommand}" CommandParameter="Dark" />
+                    <MenuItem Header="{x:Static prop:Strings.Menu_View_Theme_System}" Command="{Binding SetThemeCommand}" CommandParameter="System" />
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="_Repository">
-                <MenuItem Header="_Fetch"  Command="{Binding FetchCommand}" />
-                <MenuItem Header="_Pull"   Command="{Binding PullCommand}" />
-                <MenuItem Header="P_ush"   Command="{Binding PushCommand}" />
+            <MenuItem Header="{x:Static prop:Strings.Menu_Repository}">
+                <MenuItem Header="{x:Static prop:Strings.Menu_Repository_Fetch}"  Command="{Binding FetchCommand}" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_Repository_Pull}"   Command="{Binding PullCommand}" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_Repository_Push}"   Command="{Binding PushCommand}" />
             </MenuItem>
-            <MenuItem Header="_Branch">
-                <MenuItem Header="_Create Branch..." Command="{Binding CreateBranchCommand}" />
+            <MenuItem Header="{x:Static prop:Strings.Menu_Branch}">
+                <MenuItem Header="{x:Static prop:Strings.Menu_Branch_Create}" Command="{Binding CreateBranchCommand}" />
                 <Separator />
-                <MenuItem Header="_Stash Changes..." Command="{Binding StashChangesCommand}" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_Branch_Stash}" Command="{Binding StashChangesCommand}" />
             </MenuItem>
-            <MenuItem Header="_Tag">
-                <MenuItem Header="_Create Tag..." Command="{Binding CreateTagCommand}" />
+            <MenuItem Header="{x:Static prop:Strings.Menu_Tag}">
+                <MenuItem Header="{x:Static prop:Strings.Menu_Tag_Create}" Command="{Binding CreateTagCommand}" />
             </MenuItem>
-            <MenuItem Header="Re_mote">
-                <MenuItem Header="_Add Remote..." Command="{Binding AddRemoteCommand}" />
+            <MenuItem Header="{x:Static prop:Strings.Menu_Remote}">
+                <MenuItem Header="{x:Static prop:Strings.Menu_Remote_Add}" Command="{Binding AddRemoteCommand}" />
                 <Separator />
-                <MenuItem Header="_Fetch All" Command="{Binding FetchCommand}" />
+                <MenuItem Header="{x:Static prop:Strings.Menu_Remote_FetchAll}" Command="{Binding FetchCommand}" />
             </MenuItem>
             <MenuItem Header="_Commit"  IsEnabled="False" />
-            <MenuItem Header="_Tools">
-                <MenuItem Header="_Account Settings..." Command="{Binding OpenAccountSettingsCommand}" />
+            <MenuItem Header="{x:Static prop:Strings.Menu_Tools}">
+                <MenuItem Header="{x:Static prop:Strings.Menu_Tools_AccountSettings}" Command="{Binding OpenAccountSettingsCommand}" />
             </MenuItem>
-            <MenuItem Header="_Help"    IsEnabled="False" />
+            <MenuItem Header="{x:Static prop:Strings.Menu_Help}" IsEnabled="False" />
         </Menu>
 
         <!-- Toolbar -->
         <ToolBarTray DockPanel.Dock="Top" Background="{DynamicResource BrushSurface}">
             <ToolBar Background="{DynamicResource BrushSurface}">
-                <Button Content="Open"      Command="{Binding OpenRepositoryCommand}" ToolTip="Open Repository (Ctrl+O)" />
+                <Button Content="{x:Static prop:Strings.Toolbar_Open}"   Command="{Binding OpenRepositoryCommand}" ToolTip="{x:Static prop:Strings.Toolbar_Open_Tooltip}" />
                 <Separator />
-                <Button Content="⇓ Fetch"   Command="{Binding FetchCommand}"  ToolTip="Fetch" />
-                <Button Content="⇓ Pull"    Command="{Binding PullCommand}"   ToolTip="Pull" />
-                <Button Content="⇑ Push"    Command="{Binding PushCommand}"   ToolTip="Push" />
+                <Button Content="{x:Static prop:Strings.Toolbar_Fetch}"  Command="{Binding FetchCommand}"          ToolTip="{x:Static prop:Strings.Toolbar_Fetch_Tooltip}" />
+                <Button Content="{x:Static prop:Strings.Toolbar_Pull}"   Command="{Binding PullCommand}"           ToolTip="{x:Static prop:Strings.Toolbar_Pull_Tooltip}" />
+                <Button Content="{x:Static prop:Strings.Toolbar_Push}"   Command="{Binding PushCommand}"           ToolTip="{x:Static prop:Strings.Toolbar_Push_Tooltip}" />
                 <Separator />
-                <Button Content="⎇ Branch"  Command="{Binding CreateBranchCommand}" ToolTip="Create Branch" />
-                <Button Content="✎ Stash"   Command="{Binding StashChangesCommand}" ToolTip="Stash Changes" />
+                <Button Content="{x:Static prop:Strings.Toolbar_Branch}" Command="{Binding CreateBranchCommand}"  ToolTip="{x:Static prop:Strings.Toolbar_Branch_Tooltip}" />
+                <Button Content="{x:Static prop:Strings.Toolbar_Stash}"  Command="{Binding StashChangesCommand}"  ToolTip="{x:Static prop:Strings.Toolbar_Stash_Tooltip}" />
             </ToolBar>
         </ToolBarTray>
 
@@ -121,7 +122,7 @@
                            Foreground="#58a6ff"
                            FontWeight="SemiBold"
                            Cursor="Hand"
-                           ToolTip="Visit Releases page to download the update"
+                           ToolTip="{x:Static prop:Strings.Update_BannerTooltip}"
                            MouseLeftButtonUp="OnUpdateBannerClick" />
             </StatusBarItem>
         </StatusBar>

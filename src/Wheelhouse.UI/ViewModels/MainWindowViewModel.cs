@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Wheelhouse.Core.Services;
 using Wheelhouse.UI.Messages;
+using Wheelhouse.UI.Properties;
 using Wheelhouse.UI.Services;
 using Wheelhouse.UI.Views;
 
@@ -39,7 +40,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     private readonly TabDefinition _logTab;
 
     [ObservableProperty] private string _title = "Wheelhouse";
-    [ObservableProperty] private string _statusText = "Ready";
+    [ObservableProperty] private string _statusText = Strings.Status_Ready;
     [ObservableProperty] private bool _isBusy = false;
     [ObservableProperty] private bool _isTerminalVisible = false;
     [ObservableProperty] private AppTheme _currentTheme;
@@ -69,8 +70,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         DiffViewModel = diffViewModel;
         SidebarViewModel = sidebarViewModel;
 
-        var workingTreeTab = new TabDefinition("Working Tree", workingTreeViewModel);
-        _logTab = new TabDefinition("Log", logViewModel);
+        var workingTreeTab = new TabDefinition(Strings.Tab_WorkingTree, workingTreeViewModel);
+        _logTab = new TabDefinition(Strings.Tab_Log, logViewModel);
         Tabs = [workingTreeTab, _logTab];
         ActiveTab = workingTreeTab;
 
@@ -92,7 +93,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         {
             if (existing is null)
             {
-                existing = new TabDefinition("Reflog", _reflogViewModel, canClose: true, onClose: RemoveTab);
+                existing = new TabDefinition(Strings.Tab_Reflog, _reflogViewModel, canClose: true, onClose: RemoveTab);
                 Tabs.Add(existing);
             }
             ActiveTab = existing;
@@ -107,7 +108,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
             if (existing is null)
             {
                 var vm = new FileHistoryViewModel(msg.FilePath, _repositoryService);
-                var header = "History: " + System.IO.Path.GetFileName(msg.FilePath);
+                var header = string.Format(Strings.Tab_HistoryPrefix, System.IO.Path.GetFileName(msg.FilePath));
                 existing = new TabDefinition(header, vm, canClose: true, onClose: RemoveTab);
                 Tabs.Add(existing);
             }
@@ -123,7 +124,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
             if (existing is null)
             {
                 var vm = new BlameViewModel(msg.FilePath, _repositoryService);
-                var header = "Blame: " + System.IO.Path.GetFileName(msg.FilePath);
+                var header = string.Format(Strings.Tab_BlamePrefix, System.IO.Path.GetFileName(msg.FilePath));
                 existing = new TabDefinition(header, vm, canClose: true, onClose: RemoveTab);
                 Tabs.Add(existing);
             }
@@ -143,7 +144,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         {
             if (existing is null)
             {
-                existing = new TabDefinition("Pull Requests", _pullRequestsViewModel, canClose: true, onClose: RemoveTab);
+                existing = new TabDefinition(Strings.Tab_PullRequests, _pullRequestsViewModel, canClose: true, onClose: RemoveTab);
                 Tabs.Add(existing);
             }
             ActiveTab = existing;
@@ -152,7 +153,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
 
     void IRecipient<UpdateAvailableMessage>.Receive(UpdateAvailableMessage msg) =>
         Application.Current.Dispatcher.Invoke(() =>
-            UpdateAvailableText = $"Update available: v{msg.Version}");
+            UpdateAvailableText = string.Format(Strings.Update_BannerFormat, msg.Version));
 
     private void RemoveTab(TabDefinition tab) =>
         Application.Current.Dispatcher.Invoke(() => Tabs.Remove(tab));
@@ -191,14 +192,14 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     private async Task OpenRepositoryPathAsync(string path, bool silent = false)
     {
         IsBusy = true;
-        StatusText = "Opening repository...";
+        StatusText = Strings.Status_Opening;
         try
         {
             await Task.Run(() => _repositoryService.Open(path));
 
             var repoInfo = _repositoryService.CurrentRepository!;
             Title = $"{repoInfo.Name} — Wheelhouse";
-            StatusText = "Ready";
+            StatusText = Strings.Status_Ready;
 
             _settingsService.Update(s =>
             {
@@ -212,9 +213,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
         }
         catch (Exception ex)
         {
-            StatusText = "Ready";
+            StatusText = Strings.Status_Ready;
             if (!silent)
-                MessageBox.Show($"Could not open repository:\n{ex.Message}", "Error",
+                MessageBox.Show(string.Format(Strings.Error_OpenRepo, ex.Message), Strings.Dialog_Error,
                     MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -228,16 +229,16 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     {
         if (!_repositoryService.IsOpen) return;
         IsBusy = true;
-        StatusText = "Fetching...";
+        StatusText = Strings.Status_Fetching;
         try
         {
             await _repositoryService.FetchAsync();
-            StatusText = "Fetch complete";
+            StatusText = Strings.Status_FetchComplete;
             WeakReferenceMessenger.Default.Send(new WorkingTreeChangedMessage());
         }
         catch (Exception ex)
         {
-            StatusText = $"Fetch failed: {ex.Message}";
+            StatusText = string.Format(Strings.Status_FetchFailed, ex.Message);
         }
         finally
         {
@@ -250,16 +251,16 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     {
         if (!_repositoryService.IsOpen) return;
         IsBusy = true;
-        StatusText = "Pulling...";
+        StatusText = Strings.Status_Pulling;
         try
         {
             await _repositoryService.PullAsync();
-            StatusText = "Pull complete";
+            StatusText = Strings.Status_PullComplete;
             WeakReferenceMessenger.Default.Send(new WorkingTreeChangedMessage());
         }
         catch (Exception ex)
         {
-            StatusText = $"Pull failed: {ex.Message}";
+            StatusText = string.Format(Strings.Status_PullFailed, ex.Message);
         }
         finally
         {
@@ -272,15 +273,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     {
         if (!_repositoryService.IsOpen) return;
         IsBusy = true;
-        StatusText = "Pushing...";
+        StatusText = Strings.Status_Pushing;
         try
         {
             await _repositoryService.PushAsync();
-            StatusText = "Push complete";
+            StatusText = Strings.Status_PushComplete;
         }
         catch (Exception ex)
         {
-            StatusText = $"Push failed: {ex.Message}";
+            StatusText = string.Format(Strings.Status_PushFailed, ex.Message);
         }
         finally
         {

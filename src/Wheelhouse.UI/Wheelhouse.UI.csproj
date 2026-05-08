@@ -15,6 +15,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator></Generator>
+      <LastGenOutput></LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Properties\Resources.fr.resx">
+      <Generator></Generator>
+      <LastGenOutput></LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Wheelhouse.Core\Wheelhouse.Core.csproj" />
     <ProjectReference Include="..\Wheelhouse.Hosting.Abstractions\Wheelhouse.Hosting.Abstractions.csproj" />
     <ProjectReference Include="..\Wheelhouse.Hosting.GitHub\Wheelhouse.Hosting.GitHub.csproj" />

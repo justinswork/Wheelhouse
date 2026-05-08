@@ -122,7 +122,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
             var hunks = diff.IsBinary
                 ? []
                 : diff.Hunks
-                    .Select(h => new HunkViewModel(h, filePath, isStaged, diff.IsNew, diff.IsDeleted, _repositoryService, isSideBySide: _isSideBySide, isWordWrap: _isWordWrap))
+                    .Select(h => new HunkViewModel(h, filePath, isStaged, diff.IsNew, diff.IsDeleted, _repositoryService, isSideBySide: IsSideBySide, isWordWrap: IsWordWrap))
                     .ToList();
 
             Application.Current.Dispatcher.Invoke(() =>
@@ -173,7 +173,7 @@ public sealed partial class DiffViewModel : ViewModelBase,
             var hunks = diff.IsBinary
                 ? []
                 : diff.Hunks
-                    .Select(h => new HunkViewModel(h, filePath, false, diff.IsNew, diff.IsDeleted, _repositoryService, isReadOnly: true, isSideBySide: _isSideBySide, isWordWrap: _isWordWrap))
+                    .Select(h => new HunkViewModel(h, filePath, false, diff.IsNew, diff.IsDeleted, _repositoryService, isReadOnly: true, isSideBySide: IsSideBySide, isWordWrap: IsWordWrap))
                     .ToList();
 
             Application.Current.Dispatcher.Invoke(() =>

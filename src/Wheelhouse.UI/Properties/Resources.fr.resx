@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Menu strings -->
+  <data name="Menu_File" xml:space="preserve">
+    <value>_Fichier</value>
+  </data>
+  <data name="Menu_File_Open" xml:space="preserve">
+    <value>_Ouvrir un dépôt...</value>
+  </data>
+  <data name="Menu_File_Clone" xml:space="preserve">
+    <value>_Cloner un dépôt...</value>
+  </data>
+  <data name="Menu_File_Init" xml:space="preserve">
+    <value>Initialiser un _nouveau dépôt...</value>
+  </data>
+  <data name="Menu_File_Exit" xml:space="preserve">
+    <value>_Quitter</value>
+  </data>
+  <data name="Menu_View" xml:space="preserve">
+    <value>_Affichage</value>
+  </data>
+  <data name="Menu_View_Terminal" xml:space="preserve">
+    <value>_Terminal</value>
+  </data>
+  <data name="Menu_View_Reflog" xml:space="preserve">
+    <value>_Reflog</value>
+  </data>
+  <data name="Menu_View_PullRequests" xml:space="preserve">
+    <value>_Demandes de tirage</value>
+  </data>
+  <data name="Menu_View_Theme" xml:space="preserve">
+    <value>_Thème</value>
+  </data>
+  <data name="Menu_View_Theme_Light" xml:space="preserve">
+    <value>_Clair</value>
+  </data>
+  <data name="Menu_View_Theme_Dark" xml:space="preserve">
+    <value>_Sombre</value>
+  </data>
+  <data name="Menu_View_Theme_System" xml:space="preserve">
+    <value>_Système</value>
+  </data>
+  <data name="Menu_Repository" xml:space="preserve">
+    <value>_Dépôt</value>
+  </data>
+  <data name="Menu_Repository_Fetch" xml:space="preserve">
+    <value>_Récupérer</value>
+  </data>
+  <data name="Menu_Repository_Pull" xml:space="preserve">
+    <value>_Tirer</value>
+  </data>
+  <data name="Menu_Repository_Push" xml:space="preserve">
+    <value>_Pousser</value>
+  </data>
+  <data name="Menu_Branch" xml:space="preserve">
+    <value>_Branche</value>
+  </data>
+  <data name="Menu_Branch_Create" xml:space="preserve">
+    <value>_Créer une branche...</value>
+  </data>
+  <data name="Menu_Branch_Stash" xml:space="preserve">
+    <value>_Remiser les modifications...</value>
+  </data>
+  <data name="Menu_Tag" xml:space="preserve">
+    <value>_Étiquette</value>
+  </data>
+  <data name="Menu_Tag_Create" xml:space="preserve">
+    <value>_Créer une étiquette...</value>
+  </data>
+  <data name="Menu_Remote" xml:space="preserve">
+    <value>_Distant</value>
+  </data>
+  <data name="Menu_Remote_Add" xml:space="preserve">
+    <value>_Ajouter un distant...</value>
+  </data>
+  <data name="Menu_Remote_FetchAll" xml:space="preserve">
+    <value>_Tout récupérer</value>
+  </data>
+  <data name="Menu_Tools" xml:space="preserve">
+    <value>_Outils</value>
+  </data>
+  <data name="Menu_Tools_AccountSettings" xml:space="preserve">
+    <value>_Paramètres du compte...</value>
+  </data>
+  <data name="Menu_Help" xml:space="preserve">
+    <value>_Aide</value>
+  </data>
+
+  <!-- Toolbar -->
+  <data name="Toolbar_Open" xml:space="preserve">
+    <value>Ouvrir</value>
+  </data>
+  <data name="Toolbar_Fetch" xml:space="preserve">
+    <value>⇓ Récupérer</value>
+  </data>
+  <data name="Toolbar_Pull" xml:space="preserve">
+    <value>⇓ Tirer</value>
+  </data>
+  <data name="Toolbar_Push" xml:space="preserve">
+    <value>⇑ Pousser</value>
+  </data>
+  <data name="Toolbar_Branch" xml:space="preserve">
+    <value>⎇ Branche</value>
+  </data>
+  <data name="Toolbar_Stash" xml:space="preserve">
+    <value>✎ Remiser</value>
+  </data>
+  <data name="Toolbar_Open_Tooltip" xml:space="preserve">
+    <value>Ouvrir un dépôt (Ctrl+O)</value>
+  </data>
+  <data name="Toolbar_Fetch_Tooltip" xml:space="preserve">
+    <value>Récupérer</value>
+  </data>
+  <data name="Toolbar_Pull_Tooltip" xml:space="preserve">
+    <value>Tirer</value>
+  </data>
+  <data name="Toolbar_Push_Tooltip" xml:space="preserve">
+    <value>Pousser</value>
+  </data>
+  <data name="Toolbar_Branch_Tooltip" xml:space="preserve">
+    <value>Créer une branche</value>
+  </data>
+  <data name="Toolbar_Stash_Tooltip" xml:space="preserve">
+    <value>Remiser les modifications</value>
+  </data>
+
+  <!-- Sidebar -->
+  <data name="Sidebar_EmptyState" xml:space="preserve">
+    <value>Ouvrez un dépôt pour commencer.</value>
+  </data>
+  <data name="Sidebar_ViewReflog" xml:space="preserve">
+    <value>Voir le reflog</value>
+  </data>
+  <data name="Sidebar_LocalBranches" xml:space="preserve">
+    <value>BRANCHES LOCALES</value>
+  </data>
+  <data name="Sidebar_RemoteBranches" xml:space="preserve">
+    <value>BRANCHES DISTANTES</value>
+  </data>
+  <data name="Sidebar_Tags" xml:space="preserve">
+    <value>ÉTIQUETTES</value>
+  </data>
+  <data name="Sidebar_Remotes" xml:space="preserve">
+    <value>DISTANTS</value>
+  </data>
+  <data name="Sidebar_Stashes" xml:space="preserve">
+    <value>REMISAGES</value>
+  </data>
+  <data name="Sidebar_Worktrees" xml:space="preserve">
+    <value>ESPACES DE TRAVAIL</value>
+  </data>
+  <data name="Sidebar_NewBranch_Tooltip" xml:space="preserve">
+    <value>Nouvelle branche</value>
+  </data>
+
+  <!-- Log -->
+  <data name="Log_Title" xml:space="preserve">
+    <value>JOURNAL</value>
+  </data>
+  <data name="Log_Refresh" xml:space="preserve">
+    <value>Actualiser</value>
+  </data>
+  <data name="Log_Filter" xml:space="preserve">
+    <value>Filtrer :</value>
+  </data>
+  <data name="Log_LoadMore" xml:space="preserve">
+    <value>Charger plus de commits...</value>
+  </data>
+  <data name="Log_Col_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="Log_Col_Author" xml:space="preserve">
+    <value>Auteur</value>
+  </data>
+  <data name="Log_Col_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Log_Col_SHA" xml:space="preserve">
+    <value>SHA</value>
+  </data>
+  <data name="Log_Col_CI" xml:space="preserve">
+    <value>IC</value>
+  </data>
+
+  <!-- WorkingTree -->
+  <data name="WorkingTree_Staged" xml:space="preserve">
+    <value>MODIFICATIONS INDEXÉES</value>
+  </data>
+  <data name="WorkingTree_Unstaged" xml:space="preserve">
+    <value>MODIFICATIONS NON INDEXÉES</value>
+  </data>
+  <data name="WorkingTree_NoStaged" xml:space="preserve">
+    <value>Aucune modification indexée</value>
+  </data>
+  <data name="WorkingTree_NoUnstaged" xml:space="preserve">
+    <value>L'arbre de travail est propre</value>
+  </data>
+  <data name="WorkingTree_Unstage_Tooltip" xml:space="preserve">
+    <value>Désindexer</value>
+  </data>
+  <data name="WorkingTree_Stage_Tooltip" xml:space="preserve">
+    <value>Indexer</value>
+  </data>
+  <data name="WorkingTree_UnstageAll" xml:space="preserve">
+    <value>Tout désindexer</value>
+  </data>
+  <data name="WorkingTree_StageAll" xml:space="preserve">
+    <value>Tout indexer</value>
+  </data>
+  <data name="WorkingTree_Refresh_Tooltip" xml:space="preserve">
+    <value>Actualiser</value>
+  </data>
+  <data name="WorkingTree_CommitPlaceholder" xml:space="preserve">
+    <value>Message de commit</value>
+  </data>
+  <data name="WorkingTree_Amend" xml:space="preserve">
+    <value>Modifier</value>
+  </data>
+  <data name="WorkingTree_Commit" xml:space="preserve">
+    <value>Valider</value>
+  </data>
+  <data name="WorkingTree_Retry" xml:space="preserve">
+    <value>Réessayer</value>
+  </data>
+
+  <!-- Diff -->
+  <data name="Diff_SelectFile" xml:space="preserve">
+    <value>Sélectionnez un fichier pour afficher ses différences.</value>
+  </data>
+  <data name="Diff_Binary" xml:space="preserve">
+    <value>Fichier binaire — diff non affiché</value>
+  </data>
+  <data name="Diff_Loading" xml:space="preserve">
+    <value>Chargement du diff...</value>
+  </data>
+  <data name="Diff_Wrap" xml:space="preserve">
+    <value>Retour à la ligne</value>
+  </data>
+  <data name="Diff_SideBySide" xml:space="preserve">
+    <value>Côte à côte</value>
+  </data>
+  <data name="Diff_StageHunk" xml:space="preserve">
+    <value>Indexer le bloc</value>
+  </data>
+  <data name="Diff_UnstageHunk" xml:space="preserve">
+    <value>Désindexer le bloc</value>
+  </data>
+  <data name="Diff_DiscardHunk" xml:space="preserve">
+    <value>Ignorer le bloc</value>
+  </data>
+
+  <!-- Tabs -->
+  <data name="Tab_WorkingTree" xml:space="preserve">
+    <value>Arbre de travail</value>
+  </data>
+  <data name="Tab_Log" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="Tab_Reflog" xml:space="preserve">
+    <value>Reflog</value>
+  </data>
+  <data name="Tab_PullRequests" xml:space="preserve">
+    <value>Demandes de tirage</value>
+  </data>
+  <data name="Tab_HistoryPrefix" xml:space="preserve">
+    <value>Historique : {0}</value>
+  </data>
+  <data name="Tab_BlamePrefix" xml:space="preserve">
+    <value>Blame : {0}</value>
+  </data>
+
+  <!-- Status -->
+  <data name="Status_Ready" xml:space="preserve">
+    <value>Prêt</value>
+  </data>
+  <data name="Status_Opening" xml:space="preserve">
+    <value>Ouverture du dépôt...</value>
+  </data>
+  <data name="Status_FailedOpen" xml:space="preserve">
+    <value>Échec de l'ouverture du dépôt</value>
+  </data>
+  <data name="Status_Fetching" xml:space="preserve">
+    <value>Récupération en cours...</value>
+  </data>
+  <data name="Status_FetchComplete" xml:space="preserve">
+    <value>Récupération terminée</value>
+  </data>
+  <data name="Status_Pulling" xml:space="preserve">
+    <value>Tirage en cours...</value>
+  </data>
+  <data name="Status_PullComplete" xml:space="preserve">
+    <value>Tirage terminé</value>
+  </data>
+  <data name="Status_Pushing" xml:space="preserve">
+    <value>Poussée en cours...</value>
+  </data>
+  <data name="Status_PushComplete" xml:space="preserve">
+    <value>Poussée terminée</value>
+  </data>
+  <data name="Status_FetchFailed" xml:space="preserve">
+    <value>Échec de la récupération : {0}</value>
+  </data>
+  <data name="Status_PullFailed" xml:space="preserve">
+    <value>Échec du tirage : {0}</value>
+  </data>
+  <data name="Status_PushFailed" xml:space="preserve">
+    <value>Échec de la poussée : {0}</value>
+  </data>
+
+  <!-- Update -->
+  <data name="Update_BannerFormat" xml:space="preserve">
+    <value>Mise à jour disponible : v{0}</value>
+  </data>
+  <data name="Update_BannerTooltip" xml:space="preserve">
+    <value>Cliquez pour afficher les notes de version et mettre à jour</value>
+  </data>
+  <data name="Update_DialogTitle" xml:space="preserve">
+    <value>Mise à jour disponible</value>
+  </data>
+  <data name="Update_DialogHeader" xml:space="preserve">
+    <value>Wheelhouse {0} est disponible</value>
+  </data>
+  <data name="Update_Now" xml:space="preserve">
+    <value>Mettre à jour maintenant</value>
+  </data>
+  <data name="Update_Later" xml:space="preserve">
+    <value>Plus tard</value>
+  </data>
+  <data name="Update_Downloading" xml:space="preserve">
+    <value>Téléchargement...</value>
+  </data>
+
+  <!-- Dialogs / errors -->
+  <data name="Dialog_DiscardHunk_Title" xml:space="preserve">
+    <value>Ignorer le bloc</value>
+  </data>
+  <data name="Dialog_DiscardHunk_Message" xml:space="preserve">
+    <value>Ignorer ce bloc ?&#xA;&#xA;Cela supprimera définitivement ces modifications de l'arbre de travail.</value>
+  </data>
+  <data name="Dialog_Error" xml:space="preserve">
+    <value>Erreur</value>
+  </data>
+  <data name="Dialog_Warning" xml:space="preserve">
+    <value>Avertissement</value>
+  </data>
+  <data name="Error_OpenRepo" xml:space="preserve">
+    <value>Impossible d'ouvrir le dépôt :&#xA;{0}</value>
+  </data>
+  <data name="Error_CommitFailed" xml:space="preserve">
+    <value>Échec du commit : {0}</value>
+  </data>
+  <data name="Error_CherryPickFailed" xml:space="preserve">
+    <value>Échec du cherry-pick : {0}</value>
+  </data>
+  <data name="Error_RevertFailed" xml:space="preserve">
+    <value>Échec du revert : {0}</value>
+  </data>
+  <data name="Error_ResetFailed" xml:space="preserve">
+    <value>Échec du reset : {0}</value>
+  </data>
+
+  <!-- Branch context menu -->
+  <data name="Branch_Checkout" xml:space="preserve">
+    <value>Extraire</value>
+  </data>
+  <data name="Branch_MergeIntoCurrent" xml:space="preserve">
+    <value>Fusionner dans la branche courante</value>
+  </data>
+  <data name="Branch_RebaseOnto" xml:space="preserve">
+    <value>Rebaser sur</value>
+  </data>
+  <data name="Branch_Rename" xml:space="preserve">
+    <value>Renommer...</value>
+  </data>
+  <data name="Branch_Delete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="Branch_DeleteRemote" xml:space="preserve">
+    <value>Supprimer la branche distante</value>
+  </data>
+  <data name="Branch_SetUpstream" xml:space="preserve">
+    <value>Définir l'amont...</value>
+  </data>
+  <data name="Branch_FileHistory" xml:space="preserve">
+    <value>Historique du fichier</value>
+  </data>
+  <data name="Branch_Blame" xml:space="preserve">
+    <value>Blame</value>
+  </data>
+
+  <!-- Log context menu -->
+  <data name="Log_CherryPick" xml:space="preserve">
+    <value>Cherry-pick</value>
+  </data>
+  <data name="Log_Revert" xml:space="preserve">
+    <value>Annuler le commit...</value>
+  </data>
+  <data name="Log_ResetToHere" xml:space="preserve">
+    <value>Réinitialiser jusqu'ici...</value>
+  </data>
+
+  <!-- Tags context menu -->
+  <data name="Tag_Push" xml:space="preserve">
+    <value>Pousser l'étiquette</value>
+  </data>
+  <data name="Tag_Delete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+
+  <!-- Stash context menu -->
+  <data name="Stash_Apply" xml:space="preserve">
+    <value>Appliquer</value>
+  </data>
+  <data name="Stash_PopApply" xml:space="preserve">
+    <value>Dépiler (appliquer et supprimer)</value>
+  </data>
+  <data name="Stash_Drop" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+
+  <!-- Remote context menu -->
+  <data name="Remote_Fetch" xml:space="preserve">
+    <value>Récupérer</value>
+  </data>
+  <data name="Remote_Prune" xml:space="preserve">
+    <value>Élaguer</value>
+  </data>
+  <data name="Remote_Rename" xml:space="preserve">
+    <value>Renommer...</value>
+  </data>
+  <data name="Remote_Remove" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+
+  <!-- Additional sidebar tooltips -->
+  <data name="Sidebar_NewTag_Tooltip" xml:space="preserve">
+    <value>Nouvelle étiquette</value>
+  </data>
+  <data name="Sidebar_AddRemote_Tooltip" xml:space="preserve">
+    <value>Ajouter un distant</value>
+  </data>
+  <data name="Sidebar_PruneWorktrees_Tooltip" xml:space="preserve">
+    <value>Élaguer les espaces de travail</value>
+  </data>
+  <data name="Sidebar_AddWorktree_Tooltip" xml:space="preserve">
+    <value>Ajouter un espace de travail</value>
+  </data>
+
+  <!-- Worktrees context menu -->
+  <data name="Worktree_Remove" xml:space="preserve">
+    <value>Supprimer l'espace de travail</value>
+  </data>
+
+  <!-- Relative dates -->
+  <data name="Date_JustNow" xml:space="preserve">
+    <value>à l'instant</value>
+  </data>
+  <data name="Date_MinutesAgo" xml:space="preserve">
+    <value>il y a {0} min</value>
+  </data>
+  <data name="Date_HoursAgo" xml:space="preserve">
+    <value>il y a {0} h</value>
+  </data>
+  <data name="Date_DaysAgo" xml:space="preserve">
+    <value>il y a {0} j</value>
+  </data>
+  <data name="Date_MonthsAgo" xml:space="preserve">
+    <value>il y a {0} mois</value>
+  </data>
+  <data name="Date_YearsAgo" xml:space="preserve">
+    <value>il y a {0} an(s)</value>
+  </data>
+
+</root>

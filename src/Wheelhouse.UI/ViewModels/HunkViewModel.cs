@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Wheelhouse.Core.Models;
 using Wheelhouse.Core.Services;
 using Wheelhouse.UI.Messages;
+using Wheelhouse.UI.Properties;
 
 namespace Wheelhouse.UI.ViewModels;
 
@@ -93,7 +94,7 @@ public sealed partial class HunkViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Stage hunk failed: {ex.Message}", "Stage Hunk", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Stage hunk failed: {ex.Message}", Strings.Diff_StageHunk, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -107,15 +108,15 @@ public sealed partial class HunkViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Unstage hunk failed: {ex.Message}", "Unstage Hunk", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Unstage hunk failed: {ex.Message}", Strings.Diff_UnstageHunk, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     [RelayCommand]
     private async Task DiscardHunkAsync()
     {
-        if (MessageBox.Show($"Discard this hunk?\n\nThis will permanently remove these working-tree changes.",
-                "Discard Hunk", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+        if (MessageBox.Show(Strings.Dialog_DiscardHunk_Message,
+                Strings.Dialog_DiscardHunk_Title, MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
             return;
         try
         {
@@ -124,7 +125,7 @@ public sealed partial class HunkViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Discard hunk failed: {ex.Message}", "Discard Hunk", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Discard hunk failed: {ex.Message}", Strings.Diff_DiscardHunk, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

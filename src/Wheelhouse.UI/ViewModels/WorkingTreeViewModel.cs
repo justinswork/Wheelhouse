@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Wheelhouse.Core.Services;
 using Wheelhouse.UI.Messages;
+using Wheelhouse.UI.Properties;
 
 namespace Wheelhouse.UI.ViewModels;
 
@@ -149,7 +150,7 @@ public sealed partial class WorkingTreeViewModel : ViewModelBase,
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Commit failed: {ex.Message}";
+            ErrorMessage = string.Format(Strings.Error_CommitFailed, ex.Message);
             OnPropertyChanged(nameof(HasError));
         }
     }

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Wheelhouse.Core.Models;
 using Wheelhouse.UI.Controls.CommitGraph;
+using Wheelhouse.UI.Properties;
 
 namespace Wheelhouse.UI.ViewModels;
 
@@ -27,12 +28,12 @@ public sealed partial class CommitItemViewModel : ViewModelBase
         var delta = DateTimeOffset.Now - date;
         return delta.TotalSeconds switch
         {
-            < 60    => "just now",
-            < 3600  => $"{(int)delta.TotalMinutes}m ago",
-            < 86400 => $"{(int)delta.TotalHours}h ago",
-            < 2592000 => $"{(int)delta.TotalDays}d ago",
-            < 31536000 => $"{(int)(delta.TotalDays / 30)}mo ago",
-            _ => $"{(int)(delta.TotalDays / 365)}y ago"
+            < 60    => Strings.Date_JustNow,
+            < 3600  => string.Format(Strings.Date_MinutesAgo, (int)delta.TotalMinutes),
+            < 86400 => string.Format(Strings.Date_HoursAgo, (int)delta.TotalHours),
+            < 2592000 => string.Format(Strings.Date_DaysAgo, (int)delta.TotalDays),
+            < 31536000 => string.Format(Strings.Date_MonthsAgo, (int)(delta.TotalDays / 30)),
+            _ => string.Format(Strings.Date_YearsAgo, (int)(delta.TotalDays / 365))
         };
     }
 }

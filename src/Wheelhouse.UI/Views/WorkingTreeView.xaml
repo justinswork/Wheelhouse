@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Wheelhouse.UI.ViewModels"
+             xmlns:prop="clr-namespace:Wheelhouse.UI.Properties"
              d:DataContext="{d:DesignInstance vm:WorkingTreeViewModel}"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -22,7 +23,7 @@
                 Padding="8,6"
                 Visibility="{Binding HasError, Converter={StaticResource BoolToVisibilityConverter}}">
             <DockPanel>
-                <Button DockPanel.Dock="Right" Content="Retry" Padding="6,2" FontSize="11"
+                <Button DockPanel.Dock="Right" Content="{x:Static prop:Strings.WorkingTree_Retry}" Padding="6,2" FontSize="11"
                         Command="{Binding RefreshCommand}"
                         Background="Transparent" BorderThickness="1" BorderBrush="#FFCFC9" />
                 <TextBlock Text="{Binding ErrorMessage}" FontSize="11" Foreground="#CF222E"
@@ -38,14 +39,14 @@
                     BorderThickness="0,0,0,1"
                     Padding="8,4">
                 <DockPanel>
-                    <TextBlock Text="STAGED CHANGES" FontSize="11" FontWeight="SemiBold"
+                    <TextBlock Text="{x:Static prop:Strings.WorkingTree_Staged}" FontSize="11" FontWeight="SemiBold"
                                Foreground="{DynamicResource BrushOnSurfaceMuted}" VerticalAlignment="Center" />
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="↺" Padding="6,2" FontSize="11"
                                 Command="{Binding RefreshCommand}"
                                 Background="Transparent" Foreground="{DynamicResource BrushOnSurfaceMuted}"
-                                BorderThickness="0" ToolTip="Refresh" />
-                        <Button Content="Unstage All" Padding="6,2" FontSize="11"
+                                BorderThickness="0" ToolTip="{x:Static prop:Strings.WorkingTree_Refresh_Tooltip}" />
+                        <Button Content="{x:Static prop:Strings.WorkingTree_UnstageAll}" Padding="6,2" FontSize="11"
                                 Command="{Binding UnstageAllCommand}"
                                 Background="Transparent" Foreground="{DynamicResource BrushOnSurfaceMuted}"
                                 BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}" />
@@ -58,7 +59,8 @@
                           Background="Transparent"
                           BorderThickness="0"
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          VirtualizingPanel.IsVirtualizing="True">
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling">
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -71,8 +73,8 @@
                             <Grid Margin="4,2">
                                 <Grid.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="File History" Command="{Binding OpenFileHistoryCommand}" />
-                                        <MenuItem Header="Blame" Command="{Binding OpenBlameCommand}" />
+                                        <MenuItem Header="{x:Static prop:Strings.Branch_FileHistory}" Command="{Binding OpenFileHistoryCommand}" />
+                                        <MenuItem Header="{x:Static prop:Strings.Branch_Blame}" Command="{Binding OpenBlameCommand}" />
                                     </ContextMenu>
                                 </Grid.ContextMenu>
                                 <Grid.ColumnDefinitions>
@@ -93,12 +95,12 @@
                                         Foreground="{DynamicResource BrushOnSurfaceMuted}"
                                         Command="{Binding DataContext.UnstageFileCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                         CommandParameter="{Binding}"
-                                        ToolTip="Unstage" />
+                                        ToolTip="{x:Static prop:Strings.WorkingTree_Unstage_Tooltip}" />
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <TextBlock Text="No staged changes"
+                <TextBlock Text="{x:Static prop:Strings.WorkingTree_NoStaged}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            FontSize="12" Foreground="{DynamicResource BrushOnSurfaceMuted}"
                            Visibility="{Binding HasNoStagedFiles, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -116,10 +118,10 @@
                     BorderThickness="0,0,0,1"
                     Padding="8,4">
                 <DockPanel>
-                    <TextBlock Text="UNSTAGED CHANGES" FontSize="11" FontWeight="SemiBold"
+                    <TextBlock Text="{x:Static prop:Strings.WorkingTree_Unstaged}" FontSize="11" FontWeight="SemiBold"
                                Foreground="{DynamicResource BrushOnSurfaceMuted}" VerticalAlignment="Center" />
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Stage All" Padding="6,2" FontSize="11"
+                        <Button Content="{x:Static prop:Strings.WorkingTree_StageAll}" Padding="6,2" FontSize="11"
                                 Command="{Binding StageAllCommand}"
                                 Background="Transparent" Foreground="{DynamicResource BrushOnSurfaceMuted}"
                                 BorderThickness="1" BorderBrush="{DynamicResource BrushBorder}" />
@@ -132,7 +134,8 @@
                           Background="Transparent"
                           BorderThickness="0"
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          VirtualizingPanel.IsVirtualizing="True">
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling">
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -145,8 +148,8 @@
                             <Grid Margin="4,2">
                                 <Grid.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="File History" Command="{Binding OpenFileHistoryCommand}" />
-                                        <MenuItem Header="Blame" Command="{Binding OpenBlameCommand}" />
+                                        <MenuItem Header="{x:Static prop:Strings.Branch_FileHistory}" Command="{Binding OpenFileHistoryCommand}" />
+                                        <MenuItem Header="{x:Static prop:Strings.Branch_Blame}" Command="{Binding OpenBlameCommand}" />
                                     </ContextMenu>
                                 </Grid.ContextMenu>
                                 <Grid.ColumnDefinitions>
@@ -167,12 +170,12 @@
                                         Foreground="{DynamicResource BrushOnSurfaceMuted}"
                                         Command="{Binding DataContext.StageFileCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                         CommandParameter="{Binding}"
-                                        ToolTip="Stage" />
+                                        ToolTip="{x:Static prop:Strings.WorkingTree_Stage_Tooltip}" />
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <TextBlock Text="Working tree is clean"
+                <TextBlock Text="{x:Static prop:Strings.WorkingTree_NoUnstaged}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            FontSize="12" Foreground="{DynamicResource BrushOnSurfaceMuted}"
                            Visibility="{Binding HasNoUnstagedFiles, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -187,10 +190,10 @@
                 Padding="8">
             <DockPanel>
                 <DockPanel DockPanel.Dock="Bottom" Margin="0,6,0,0">
-                    <CheckBox DockPanel.Dock="Left" Content="Amend" IsChecked="{Binding Amend}"
+                    <CheckBox DockPanel.Dock="Left" Content="{x:Static prop:Strings.WorkingTree_Amend}" IsChecked="{Binding Amend}"
                               Foreground="{DynamicResource BrushOnSurfaceMuted}" FontSize="12"
                               VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <Button DockPanel.Dock="Right" Content="Commit"
+                    <Button DockPanel.Dock="Right" Content="{x:Static prop:Strings.WorkingTree_Commit}"
                             Command="{Binding CommitCommand}"
                             IsEnabled="{Binding CanCommit}"
                             Padding="16,6" FontWeight="SemiBold" />
@@ -208,7 +211,7 @@
                             <Style.Resources>
                                 <VisualBrush x:Key="HintBrush" TileMode="None" Opacity="0.4" Stretch="None" AlignmentX="Left" AlignmentY="Top">
                                     <VisualBrush.Visual>
-                                        <TextBlock Text="Commit message" FontSize="12" Margin="4,4" />
+                                        <TextBlock Text="{x:Static prop:Strings.WorkingTree_CommitPlaceholder}" FontSize="12" Margin="4,4" />
                                     </VisualBrush.Visual>
                                 </VisualBrush>
                             </Style.Resources>
