@@ -67,5 +67,13 @@ public sealed class PullRequestsChangedMessage { }
 public sealed class UpdateAvailableMessage
 {
     public string Version { get; }
-    public UpdateAvailableMessage(string version) => Version = version;
+    public string ReleaseNotes { get; }
+    public string? DownloadUrl { get; }
+
+    public UpdateAvailableMessage(string version, string releaseNotes, string? downloadUrl)
+    {
+        Version = version;
+        ReleaseNotes = releaseNotes;
+        DownloadUrl = downloadUrl;
+    }
 }

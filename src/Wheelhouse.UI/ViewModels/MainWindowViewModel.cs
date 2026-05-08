@@ -45,6 +45,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
     [ObservableProperty] private bool _isTerminalVisible = false;
     [ObservableProperty] private AppTheme _currentTheme;
     [ObservableProperty] private string? _updateAvailableText;
+    public UpdateAvailableMessage? PendingUpdate { get; private set; }
 
     public MainWindowViewModel(
         IRepositoryService repositoryService,
@@ -153,7 +154,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase,
 
     void IRecipient<UpdateAvailableMessage>.Receive(UpdateAvailableMessage msg) =>
         Application.Current.Dispatcher.Invoke(() =>
-            UpdateAvailableText = string.Format(Strings.Update_BannerFormat, msg.Version));
+        {
+            PendingUpdate = msg;
+            UpdateAvailableText = string.Format(Strings.Update_BannerFormat, msg.Version);
+        });
 
     private void RemoveTab(TabDefinition tab) =>
         Application.Current.Dispatcher.Invoke(() => Tabs.Remove(tab));

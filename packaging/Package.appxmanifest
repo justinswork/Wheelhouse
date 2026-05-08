@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSIX Packaging Manifest for Wheelhouse
+  =======================================
+  This manifest is used by the CI workflow to produce an installable MSIX package.
+
+  For local development / sideloading:
+    - Enable Developer Mode in Windows Settings, or
+    - Import the self-signed certificate produced by CI into the Trusted Root store,
+      then double-click the .msix to open App Installer.
+
+  For production distribution:
+    - Replace the Publisher value with the Subject from a trusted code-signing certificate
+      (EV or OV cert from DigiCert, Sectigo, etc.).
+    - The CI signing step will need CERT_PFX and CERT_PASSWORD secrets set in the repo.
+-->
+<Package
+    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+    IgnorableNamespaces="uap rescap">
+
+  <Identity
+      Name="WheelhouseGitGUI"
+      Publisher="CN=Wheelhouse"
+      Version="1.0.0.0"
+      ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Wheelhouse</DisplayName>
+    <PublisherDisplayName>Wheelhouse</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <!-- Requires Windows 10 20H1 (10.0.19041) or later -->
+    <TargetDeviceFamily Name="Windows.Desktop"
+                        MinVersion="10.0.19041.0"
+                        MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+                 Executable="Wheelhouse.UI.exe"
+                 EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+          DisplayName="Wheelhouse"
+          Description="A free, open-source Git GUI for Windows"
+          BackgroundColor="transparent"
+          Square150x150Logo="Assets\Square150x150Logo.png"
+          Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile ShortName="Wheelhouse" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- Required for desktop (non-UWP) apps -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+</Package>

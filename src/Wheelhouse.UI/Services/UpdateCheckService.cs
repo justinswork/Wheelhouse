@@ -29,7 +29,16 @@ public sealed class UpdateCheckService
                               ?.GetName().Version ?? new Version(0, 0, 0);
 
             if (latest > current)
-                WeakReferenceMessenger.Default.Send(new UpdateAvailableMessage(latest.ToString()));
+            {
+                var msixUrl = release.Assets?
+                    .FirstOrDefault(a => a.Name?.EndsWith(".msix", StringComparison.OrdinalIgnoreCase) == true)
+                    ?.BrowserDownloadUrl;
+
+                WeakReferenceMessenger.Default.Send(new UpdateAvailableMessage(
+                    latest.ToString(),
+                    release.Body ?? string.Empty,
+                    msixUrl));
+            }
         }
         catch
         {
@@ -41,5 +50,20 @@ public sealed class UpdateCheckService
     {
         [JsonPropertyName("tag_name")]
         public string? TagName { get; set; }
+
+        [JsonPropertyName("body")]
+        public string? Body { get; set; }
+
+        [JsonPropertyName("assets")]
+        public GitHubAsset[]? Assets { get; set; }
+    }
+
+    private sealed class GitHubAsset
+    {
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("browser_download_url")]
+        public string? BrowserDownloadUrl { get; set; }
     }
 }

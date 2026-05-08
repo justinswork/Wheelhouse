@@ -32,26 +32,96 @@ jobs:
       - name: Test
         run: dotnet test --no-build --configuration Release
 
-      - name: Publish self-contained
+      # ── Portable ZIP ──────────────────────────────────────────────────────────
+      - name: Publish self-contained (portable)
         run: >
           dotnet publish src/Wheelhouse.UI/Wheelhouse.UI.csproj
           --configuration Release
           --runtime win-x64
           --self-contained true
-          --output publish/
+          --output publish-portable/
           /p:Version=${{ steps.version.outputs.VERSION }}
           /p:PublishSingleFile=true
           /p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Create portable ZIP
-        run: Compress-Archive -Path publish/* -DestinationPath Wheelhouse-${{ steps.version.outputs.VERSION }}-portable.zip
+        run: Compress-Archive -Path publish-portable/* -DestinationPath Wheelhouse-${{ steps.version.outputs.VERSION }}-portable.zip
         shell: pwsh
 
+      # ── MSIX ──────────────────────────────────────────────────────────────────
+      - name: Publish self-contained (MSIX layout)
+        run: >
+          dotnet publish src/Wheelhouse.UI/Wheelhouse.UI.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --output publish-msix/
+          /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Prepare MSIX manifest and assets
+        shell: pwsh
+        run: |
+          # Stamp the version from the tag (must be 4-part: Major.Minor.Build.Revision)
+          $v = "${{ steps.version.outputs.VERSION }}" + ".0"
+          (Get-Content packaging/Package.appxmanifest) `
+            -replace 'Version="1\.0\.0\.0"', "Version=`"$v`"" |
+            Set-Content publish-msix/AppxManifest.xml
+
+          # Create minimal placeholder assets (solid-colour PNGs via .NET)
+          New-Item -ItemType Directory -Force publish-msix/Assets | Out-Null
+          Add-Type -AssemblyName System.Drawing
+          foreach ($spec in @(
+              @{Name="StoreLogo.png";       W=50;  H=50},
+              @{Name="Square44x44Logo.png"; W=44;  H=44},
+              @{Name="Square150x150Logo.png";W=150;H=150},
+              @{Name="SplashScreen.png";    W=620; H=300})) {
+            $bmp = New-Object System.Drawing.Bitmap $spec.W, $spec.H
+            $g   = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.Clear([System.Drawing.Color]::FromArgb(30, 58, 92))
+            $bmp.Save("publish-msix/Assets/$($spec.Name)", [System.Drawing.Imaging.ImageFormat]::Png)
+            $g.Dispose(); $bmp.Dispose()
+          }
+
+      - name: Create self-signed certificate for sideloading
+        shell: pwsh
+        run: |
+          $cert = New-SelfSignedCertificate `
+            -Subject "CN=Wheelhouse" `
+            -KeyUsage DigitalSignature `
+            -FriendlyName "Wheelhouse Dev" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+          $pwd = ConvertTo-SecureString -String "dev" -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath wheelhouse-dev.pfx -Password $pwd
+          echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+
+      - name: Pack MSIX
+        shell: pwsh
+        run: |
+          $makeappx = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter makeappx.exe |
+                      Where-Object { $_.FullName -match "x64" } |
+                      Sort-Object FullName -Descending |
+                      Select-Object -First 1 -ExpandProperty FullName
+          & $makeappx pack /d publish-msix/ /p Wheelhouse-${{ steps.version.outputs.VERSION }}.msix /nv /o
+
+      - name: Sign MSIX
+        shell: pwsh
+        run: |
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+                      Where-Object { $_.FullName -match "x64" } |
+                      Sort-Object FullName -Descending |
+                      Select-Object -First 1 -ExpandProperty FullName
+          & $signtool sign /fd SHA256 /p7ce DetachedSignedData `
+            /f wheelhouse-dev.pfx /p dev `
+            Wheelhouse-${{ steps.version.outputs.VERSION }}.msix
+
+      # ── GitHub Release ─────────────────────────────────────────────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             Wheelhouse-${{ steps.version.outputs.VERSION }}-portable.zip
+            Wheelhouse-${{ steps.version.outputs.VERSION }}.msix
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
